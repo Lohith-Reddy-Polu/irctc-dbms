@@ -1,173 +1,70 @@
--- Train Table
+CREATE TYPE day_enum AS ENUM ('Sunday', 'Monday');
+CREATE TYPE class_enum AS ENUM ('3A', '2A', 'SLP');
+CREATE TYPE status_enum AS ENUM ('Available', 'Booked');
+CREATE TYPE gender_enum AS ENUM ('M', 'F', 'LGBTQ');
+CREATE TYPE booking_status_enum AS ENUM ('Confirmed', 'Waiting', 'Cancelled');
+
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone_no VARCHAR(15) UNIQUE NOT NULL
+);
+
+CREATE TABLE Admin (
+    admin_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL
+);
+
 CREATE TABLE Train (
-    train_no SERIAL PRIMARY KEY,
-    train_name VARCHAR(50) NOT NULL,
-    depart_time TIME NOT NULL,
-    arrival_time TIME NOT NULL,
-    source_stn VARCHAR(50) NOT NULL,
+    train_id SERIAL PRIMARY KEY,
+    train_no VARCHAR(10) UNIQUE NOT NULL,
+    train_name VARCHAR(100) NOT NULL,
+    src_stn VARCHAR(50) NOT NULL,
     dest_stn VARCHAR(50) NOT NULL,
-    no_of_res_bogies INT NOT NULL,
-    bogie_capacity INT NOT NULL
-);
-
--- Passenger Table
-CREATE TABLE Passenger (
-    passenger_id SERIAL PRIMARY KEY,
-    passenger_name VARCHAR(50) NOT NULL,
-    address VARCHAR(100),
-    age INT CHECK (age > 0),
-    gender CHAR(1) CHECK (gender IN ('M', 'F', 'O')) -- M: Male, F: Female, O: Other
-);
-
--- Ticket Table
-CREATE TABLE Ticket (
-    ticket_no SERIAL PRIMARY KEY,
-    train_no INT REFERENCES Train(train_no) ON DELETE CASCADE,
-    passenger_id INT REFERENCES Passenger(passenger_id) ON DELETE CASCADE,
-    bogie_no INT NOT NULL,
-    no_of_berths INT CHECK (no_of_berths > 0),
-    tdate DATE NOT NULL,
-    ticket_amt DECIMAL(10,2) CHECK (ticket_amt >= 0),
-    status CHAR(1) CHECK (status IN ('W', 'C')) -- W: Waitlisted, C: Confirmed
-);
-
--- Coach Table
-CREATE TABLE Coach (
-    coach_id SERIAL PRIMARY KEY,
-    train_no INT REFERENCES Train(train_no) ON DELETE CASCADE,
-    coach_type VARCHAR(50) NOT NULL, -- e.g., Sleeper, AC, General
-    seating_capacity INT CHECK (seating_capacity > 0),
-    maintenance_status VARCHAR(50), -- e.g., Good, Needs Repair
-    last_maintenance_date DATE
-);
-
--- CoachType Table
-CREATE TABLE CoachType (
-    coach_type_id SERIAL PRIMARY KEY,
-    type_name VARCHAR(50) UNIQUE NOT NULL, -- e.g., Sleeper, AC
-    amenities TEXT, -- e.g., "WiFi, Charging Ports"
-    pricing_factor DECIMAL(4,2) CHECK (pricing_factor > 0) -- Multiplier for fare calculation
-);
-
--- Route Table
-CREATE TABLE Route (
-    route_id SERIAL PRIMARY KEY,
-    train_no INT REFERENCES Train(train_no) ON DELETE CASCADE,
-    source_station VARCHAR(50) NOT NULL,
-    destination_station VARCHAR(50) NOT NULL,
-    total_distance_km INT CHECK (total_distance_km > 0),
-    estimated_travel_time INTERVAL
-);
-
--- RouteStop Table
-CREATE TABLE RouteStop (
-    stop_id SERIAL PRIMARY KEY,
-    route_id INT REFERENCES Route(route_id) ON DELETE CASCADE,
-    station_name VARCHAR(50) NOT NULL,
     arrival_time TIME NOT NULL,
     departure_time TIME NOT NULL,
-    distance_from_start INT CHECK (distance_from_start >= 0)
+    operating_days day_enum[] NOT NULL
 );
 
--- FareRule Table
-CREATE TABLE FareRule (
-    rule_id SERIAL PRIMARY KEY,
-    train_no INT REFERENCES Train(train_no) ON DELETE CASCADE,
-    coach_type_id INT REFERENCES CoachType(coach_type_id),
-    base_fare DECIMAL(10,2) CHECK (base_fare >= 0),
-    dynamic_pricing_factor DECIMAL(4,2),
-    discount_percentage DECIMAL(4,2),
-    effective_date DATE NOT NULL,
-    expiry_date DATE
-);
-
--- SeatInventory Table
-CREATE TABLE SeatInventory (
+CREATE TABLE Seats (
     seat_id SERIAL PRIMARY KEY,
-    train_no INT REFERENCES Train(train_no) ON DELETE CASCADE,
-    coach_id INT REFERENCES Coach(coach_id),
-    seat_number VARCHAR(10),
-    status VARCHAR(10) CHECK (status IN ('Available', 'Booked', 'Reserved')),
-    booking_id INT REFERENCES Ticket(ticket_no)
+    train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
+    class class_enum NOT NULL,
+    bhogi VARCHAR(3) NOT NULL CHECK (bhogi IN ('B1', 'B2', 'B3')),
+    seat_number INT NOT NULL,
+    status status_enum NOT NULL DEFAULT 'Available',
+    UNIQUE(train_id, class, bhogi, seat_number)
 );
 
--- UserPreferences Table
-CREATE TABLE UserPreferences (
-    user_id INT REFERENCES Passenger(passenger_id),
-    preferred_train_types TEXT, -- e.g., "AC,Sleeper"
-    meal_preference VARCHAR(50), -- e.g., "Veg, Non-Veg"
-    preferred_seat_position VARCHAR(50), -- e.g., "Window, Aisle"
-	PRIMARY KEY(user_id)
+CREATE TABLE Booking (
+    booking_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
+    train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
+    pnr_number VARCHAR(20) UNIQUE NOT NULL,
+    travel_date DATE NOT NULL,
+    booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    booking_status booking_status_enum NOT NULL,
+    total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
 );
 
--- MasterPassengerList Table
-CREATE TABLE MasterPassengerList (
-	user_id INT REFERENCES Passenger(passenger_id),
-	passenger_name VARCHAR(50),
-	age INT CHECK(age > 0),
-	gender CHAR(1) CHECK(gender IN ('M', 'F', 'O')),
-	PRIMARY KEY(user_id, passenger_name)
+CREATE TABLE Passenger (
+    passenger_id SERIAL PRIMARY KEY,
+    booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    gender gender_enum NOT NULL,
+    age INT NOT NULL CHECK (age BETWEEN 1 AND 100)
 );
 
--- Payment Table
-CREATE TABLE Payment (
-	payment_id SERIAL PRIMARY KEY,
-	ticket_no INT REFERENCES Ticket(ticket_no),
-	user_id INT REFERENCES Passenger(passenger_id),
-	payment_method VARCHAR(20), -- e.g., Credit Card, UPI
-	amount_paid DECIMAL(10,2) CHECK(amount_paid >= 0),
-	payment_status VARCHAR(20) CHECK(payment_status IN ('Success', 'Failed', 'Refunded')),
-	payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Refund Table
-CREATE TABLE Refund (
-	refund_id SERIAL PRIMARY KEY,
-	ticket_no INT REFERENCES Ticket(ticket_no),
-	refund_amount DECIMAL(10,2) CHECK(refund_amount >= 0),
-	refund_status VARCHAR(20) CHECK(refund_status IN ('Pending', 'Processed')),
-	refund_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- PNRPrediction Table
-CREATE TABLE PNRPrediction (
-	pnr_number BIGINT PRIMARY KEY,
-	waitlist_position INT CHECK(waitlist_position > 0),
-	confirmation_probability DECIMAL(5,2), -- Percentage likelihood of confirmation
-	last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- TrainTracking Table
-CREATE TABLE TrainTracking (
-	tracking_id SERIAL PRIMARY KEY,
-	train_no INT REFERENCES Train(train_no),
-	current_location VARCHAR(50),
-	estimated_arrival_time TIME,
-	delay_minutes INT DEFAULT 0 CHECK(delay_minutes >= 0)
-);
-
--- UserAlerts Table
-CREATE TABLE UserAlerts (
-	alert_id SERIAL PRIMARY KEY,
-	user_id INT REFERENCES Passenger(passenger_id),
-	train_no INT REFERENCES Train(train_no),
-	alert_message TEXT NOT NULL,
-	alert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- VikalpScheme Table
-CREATE TABLE VikalpScheme (
-	vikalp_id SERIAL PRIMARY KEY,
-	original_ticket_no INT REFERENCES Ticket(ticket_no),
-	alternate_train_no INT REFERENCES Train(train_no),
-	alternate_coach_type VARCHAR(50)
-);
-
--- BookingAnalytics Table
-CREATE TABLE BookingAnalytics (
-	analytics_id SERIAL PRIMARY KEY,
-	train_no INT REFERENCES Train(train_no),
-	booking_date DATE NOT NULL,
-	total_tickets_booked INT DEFAULT 0 CHECK(total_tickets_booked >= 0),
-	revenue_generated DECIMAL(10,2) DEFAULT 0.00 CHECK(revenue_generated >= 0)
+CREATE TABLE Ticket (
+    ticket_id SERIAL PRIMARY KEY,
+    train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
+    pnr_number VARCHAR(20) NOT NULL REFERENCES Booking(pnr_number) ON DELETE CASCADE,
+    booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
+    passenger_id INT NOT NULL REFERENCES Passenger(passenger_id) ON DELETE CASCADE,
+    seat_id INT NOT NULL REFERENCES Seats(seat_id) ON DELETE CASCADE,
+    UNIQUE(pnr_number, passenger_id, seat_id)
 );
