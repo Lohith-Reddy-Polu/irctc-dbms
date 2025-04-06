@@ -4,6 +4,15 @@ CREATE TYPE status_enum AS ENUM ('Available', 'Booked');
 CREATE TYPE gender_enum AS ENUM ('Male', 'Female', 'Other');
 CREATE TYPE booking_status_enum AS ENUM ('Confirmed', 'Waiting', 'Cancelled');
 
+DROP TABLE IF EXISTS Ticket CASCADE;
+DROP TABLE IF EXISTS Passenger CASCADE;
+DROP TABLE IF EXISTS Booking CASCADE;
+DROP TABLE IF EXISTS Seats CASCADE;
+DROP TABLE IF EXISTS Train CASCADE;
+DROP TABLE IF EXISTS Admin CASCADE;
+DROP TABLE IF EXISTS Users CASCADE;
+
+
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
