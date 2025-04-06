@@ -1,7 +1,7 @@
-CREATE TYPE day_enum AS ENUM ('Sunday', 'Monday');
-CREATE TYPE class_enum AS ENUM ('3A', '2A', 'SLP');
+CREATE TYPE day_enum AS ENUM ('Sunday', 'Monday', 'Tuesday' , 'Wednesday' , 'Thursday' , 'Friday' , 'Saturday');
+CREATE TYPE class_enum AS ENUM ('3AC', '2AC' , 'SLP' , '1AC');
 CREATE TYPE status_enum AS ENUM ('Available', 'Booked');
-CREATE TYPE gender_enum AS ENUM ('M', 'F', 'LGBTQ');
+CREATE TYPE gender_enum AS ENUM ('Male', 'Female', 'Other');
 CREATE TYPE booking_status_enum AS ENUM ('Confirmed', 'Waiting', 'Cancelled');
 
 CREATE TABLE Users (
