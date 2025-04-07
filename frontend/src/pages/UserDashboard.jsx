@@ -1,11 +1,12 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import Navbar from '../components/Navbar';
 
 const UserDashboard = () => {
   return (
-    <div className="container">
-      <h2>Welcome User!</h2>
-      <Link to="/trains" className="btn">View Trains</Link>
+    <div>
+      <Navbar isAdmin={false} />
+      <h2>User Dashboard</h2>
+      <p>Welcome to your dashboard. Here you can view your bookings and manage your account.</p>
     </div>
   );
 };

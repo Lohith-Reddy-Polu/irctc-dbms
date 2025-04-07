@@ -1,14 +1,12 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import Navbar from '../components/Navbar';
 
 const AdminDashboard = () => {
   return (
-    <div className="container">
-      <h2>Welcome Admin!</h2>
-      <div className="button-group">
-        <Link to="/trains" className="btn">Manage Trains</Link>
-        <Link to="/add-train" className="btn">Add New Train</Link>
-      </div>
+    <div>
+      <Navbar isAdmin={true} />
+      <h2>Admin Dashboard</h2>
+      <p>Manage trains, view bookings, and more.</p>
     </div>
   );
 };

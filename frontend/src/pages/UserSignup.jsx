@@ -25,31 +25,7 @@ import { apiUrl } from "../config/config";
 const UserSignup = () => {
   const navigate = useNavigate(); // Use this to redirect users
   const [error,setError] = useState(null);
-  // TODO: Implement the checkStatus function.
-  // If the user is already logged in, make an API call 
-  // to check their authentication status.
-  // If logged in, redirect to the dashboard.
-  // useEffect(() => {
-  //   const checkStatus = async () => {
-  //     try {
-  //       console.log("Checking for login");
-  //       const response = await fetch(`${apiUrl}/isLoggedIn`, {
-  //         method: "GET",
-  //         credentials: "include", // Enables session-based authentication
-  //       });
-  //       const data = await response.json();
-  //       if (response.status === 200) {
-  //         navigate("/dashboard");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error checking login status:", error);
-  //     }
-  //     // Implement API call here
-  //   };
-  //   checkStatus();
-  // }, [navigate]); //navigate given in chatgpt not in template
 
-  // Read about useState to understand how to manage component state
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -95,12 +71,6 @@ const UserSignup = () => {
     }
     // Implement the sign-up logic here
   };
-
-  // TODO: Use JSX to create a sign-up form with input fields for:
-  // - Username
-  // - Email
-  // - Password
-  // - A submit button
   return (
     <div>
       {/* Implement the form UI here */}
@@ -156,7 +126,7 @@ const UserSignup = () => {
         <button type="submit">Sign Up</button>
         </form>
       <p>
-        Already have an account? <a href="/login">Login here</a>
+        Already have an account? <a href="/user-login">Login here</a>
       </p>
     </div>
   );
