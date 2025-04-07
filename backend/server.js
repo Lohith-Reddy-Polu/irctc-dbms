@@ -5,10 +5,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const port =  3000;
+const port =  4000;
 
-// Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(bodyParser.json());
 
 // PostgreSQL connection
@@ -29,13 +34,14 @@ const handleDbError = (res, error) => {
 // Routes
 
 // User Signup
-app.post('/api/user-signup', async (req, res) => {
-  const { name, password, email, phone_no } = req.body;
+app.post('/user-signup', async (req, res) => {
+  const { username, password, email, phone_number } = req.body;
+  console.log("hi111");
   try {
     const result = await pool.query(
       `INSERT INTO Users (name, password, email, phone_no) 
        VALUES ($1, $2, $3, $4) RETURNING user_id, name, email, phone_no`,
-      [name, password, email, phone_no]
+      [username, password, email, phone_number]
     );
     res.status(201).json({ message: 'User registered successfully!', user: result.rows[0] });
   } catch (error) {
