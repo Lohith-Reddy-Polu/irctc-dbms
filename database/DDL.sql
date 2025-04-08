@@ -60,20 +60,14 @@ CREATE TABLE Booking (
     total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
 );
 
-CREATE TABLE Passenger (
-    passenger_id SERIAL PRIMARY KEY,
-    booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    gender gender_enum NOT NULL,
-    age INT NOT NULL CHECK (age BETWEEN 1 AND 100)
-);
 
 CREATE TABLE Ticket (
     ticket_id SERIAL PRIMARY KEY,
     train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
-    pnr_number VARCHAR(20) NOT NULL REFERENCES Booking(pnr_number) ON DELETE CASCADE,
     booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
-    passenger_id INT NOT NULL REFERENCES Passenger(passenger_id) ON DELETE CASCADE,
     seat_id INT NOT NULL REFERENCES Seats(seat_id) ON DELETE CASCADE,
+    passenger_name VARCHAR(100) NOT NULL,
+    gender gender_enum NOT NULL,
+    age INT NOT NULL CHECK (age BETWEEN 1 AND 100)
     UNIQUE(pnr_number, passenger_id, seat_id)
 );
