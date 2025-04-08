@@ -31,6 +31,7 @@ const UserLogin = () => {
       });
 
       const data = await response.json();
+      console.log("Login response: ", response.status, data);
       if (response.status === 200) {
         navigate("/user-dashboard");
       } else {

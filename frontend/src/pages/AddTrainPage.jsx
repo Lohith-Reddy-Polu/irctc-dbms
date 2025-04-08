@@ -9,7 +9,7 @@ const AddTrainPage = () => {
     dest_stn: "",
     arrival_time: "",
     departure_time: "",
-    operating_days: [],
+    operating_days: "",
   });
 
   const [error, setError] = useState(null);
@@ -38,6 +38,7 @@ const AddTrainPage = () => {
       console.log("WOWOWOW");
       const data = await response.json();
       if (response.status === 201) {
+        setFormData(data.train);
         setSuccess("Train added successfully!");
       } else {
         setError(data.message || "Failed to add train");
