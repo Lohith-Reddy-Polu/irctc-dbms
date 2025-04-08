@@ -204,6 +204,135 @@ app.post('/add-train',isAuthenticated, async (req, res) => {
   }
 });
 
+app.post("/book-ticket", async (req, res) => {
+  const { train_id, travel_date, train_class, passengers } = req.body;
+  const user_id = req.session.userId;
+
+  if (!user_id || !train_id || !travel_date || !train_class || !Array.isArray(passengers)) {
+    return res.status(400).json({ error: "Missing required booking data" });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // 1. Generate unique PNR
+    const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
+
+    // 2. Insert into Booking
+    const booking_date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+    const bookingRes = await client.query(
+      `INSERT INTO Booking (user_id, train_id, pnr_number, travel_date, booking_date, booking_status, total_fare)
+       VALUES ($1, $2, $3, $4, $5, 'Confirmed', 100)
+       RETURNING booking_id`,
+      [user_id, train_id, pnr_number, travel_date, booking_date]
+    );
+    
+    const booking_id = bookingRes.rows[0].booking_id;
+
+    // 3. Fetch available seats for the train/class
+    const seatRes = await client.query(
+      `SELECT seat_id FROM Seats 
+       WHERE train_id = $1 AND class = $2 AND status = 'Available' 
+       LIMIT $3 FOR UPDATE`,
+      [train_id, train_class, passengers.length]
+    );
+
+    if (seatRes.rows.length < passengers.length) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Not enough available seats" });
+    }
+
+    const seat_ids = seatRes.rows.map(row => row.seat_id);
+
+    // 4. Insert Tickets and mark seats as Booked
+    for (let i = 0; i < passengers.length; i++) {
+      const { name, gender, age } = passengers[i];
+      const seat_id = seat_ids[i];
+
+      await client.query(
+        `INSERT INTO Ticket (train_id, booking_id, seat_id, passenger_name, gender, age)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [train_id, booking_id, seat_id, name, gender, age]
+      );
+
+      await client.query(
+        `UPDATE Seats SET status = 'Booked' WHERE seat_id = $1`,
+        [seat_id]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({ message: "Booking successful", pnr_number });
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Booking error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release();
+  }
+});
+
+app.get("/my-tickets", async (req, res) => {
+  const user_id = req.session.userId;
+  if (!user_id) return res.status(401).json({ error: "Not logged in" });
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+         B.booking_id, B.pnr_number, B.travel_date, B.booking_date, 
+         B.booking_status, B.total_fare,
+         T.train_id, T.train_name, T.train_no,
+         Tk.ticket_id, Tk.passenger_name, Tk.gender, Tk.age, 
+         S.seat_id, S.class, S.bhogi, S.seat_number
+       FROM Booking B
+       JOIN Train T ON B.train_id = T.train_id
+       JOIN Ticket Tk ON B.booking_id = Tk.booking_id
+       JOIN Seats S ON Tk.seat_id = S.seat_id
+       WHERE B.user_id = $1
+       ORDER BY B.booking_date DESC`,
+      [user_id]
+    );
+
+    // Group passengers by booking
+    const grouped = {};
+    result.rows.forEach(row => {
+      if (!grouped[row.booking_id]) {
+        grouped[row.booking_id] = {
+          booking_id: row.booking_id,
+          pnr_number: row.pnr_number,
+          travel_date: row.travel_date,
+          booking_date: row.booking_date,
+          booking_status: row.booking_status,
+          total_fare: row.total_fare,
+          train_name: row.train_name,
+          train_no: row.train_no,
+          passengers: []
+        };
+      }
+      grouped[row.booking_id].passengers.push({
+        ticket_id: row.ticket_id,
+        name: row.passenger_name,
+        gender: row.gender,
+        age: row.age,
+        class: row.class,
+        bhogi: row.bhogi,
+        seat_number: row.seat_number
+      });
+    });
+
+    res.status(200).json(Object.values(grouped));
+  } catch (err) {
+    console.error("Error fetching tickets:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 // Logout
 // app.post('/logout', (req, res) => {
 //   req.session.destroy(err => {

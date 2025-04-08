@@ -69,5 +69,4 @@ CREATE TABLE Ticket (
     passenger_name VARCHAR(100) NOT NULL,
     gender gender_enum NOT NULL,
     age INT NOT NULL CHECK (age BETWEEN 1 AND 100)
-    UNIQUE(pnr_number, passenger_id, seat_id)
 );

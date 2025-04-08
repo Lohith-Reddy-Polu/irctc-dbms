@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import MyTickets from './pages/MyTickets';
+import Booking from './pages/Booking';
 import HomePage from './pages/HomePage';
 import UserSignup from './pages/UserSignup';
 import UserLogin from './pages/UserLogin';
@@ -29,6 +31,8 @@ const App = () => {
         <Route path="/add-train" element={<AddTrainPage />} />
         <Route path="/trains" element={<TrainsPage />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/book" element={<Booking />} />       
+        <Route path="/my-tickets" element={<MyTickets />} />    
       </Routes>
     </div>
   );

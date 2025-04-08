@@ -32,6 +32,9 @@ const Navbar = ({ isAdmin }) => {
             <button onClick={() => navigate("/user-dashboard")}>
               User Dashboard
             </button>
+            <button onClick={() => navigate("/my-tickets")}>
+              My Tickets
+            </button>
           </li>
         )}
         {isAdmin && (
