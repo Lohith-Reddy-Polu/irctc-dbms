@@ -20,15 +20,13 @@ const pool = new Pool({
 
 // Session configuration
 app.use(session({
-  // store: new pgSession({
-  //   pool: pool,                // Connection pool
-  //   tableName: 'session'       // Use another table-name than the default "session" one
-  // }),
   secret: "your-secret-key",
   resave: false,
   saveUninitialized: true,
   cookie: { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
+
+
 // Middleware
 app.use(cors({
   origin: "http://localhost:3000",
@@ -37,6 +35,11 @@ app.use(cors({
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
+// Middleware to prevent caching of authenticated pages
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 // Helper function for handling database errors
 const handleDbError = (res, error) => {
@@ -44,9 +47,17 @@ const handleDbError = (res, error) => {
   res.status(500).json({ error: error.message });
 };
 
+function isLoggedIn(req, res, next) {
+  if (req.session.userId) {
+    return res.redirect('/dashboard');  
+  }
+  next();  
+}
+
+
 function isAuthenticated(req, res, next) {
   if(!req.session.userId){
-    return res.status(400).json( {message: "Unauthorized" });//////need to change to redirection
+    return res.redirect('/login');
   }
   next();
 }
@@ -54,7 +65,7 @@ function isAuthenticated(req, res, next) {
 // Routes
 
 // User Signup
-app.post('/user-signup', async (req, res) => {
+app.post('/user-signup',isLoggedIn, async (req, res) => {
   const { username,email,password, phone_number } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -70,7 +81,7 @@ app.post('/user-signup', async (req, res) => {
 });
 
 // User Login
-app.post('/user-login', async (req, res) => {
+app.post('/user-login',isLoggedIn, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await pool.query(
@@ -93,7 +104,7 @@ app.post('/user-login', async (req, res) => {
 });
 
 // Admin Login
-app.post('/admin-login', async (req, res) => {
+app.post('/admin-login',isLoggedIn, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await pool.query(
@@ -117,7 +128,7 @@ app.post('/admin-login', async (req, res) => {
 });
 
 // Get List of Trains
-app.get('/trains', async (req, res) => {
+app.get('/trains',isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(`SELECT * FROM Train`);
     res.json(result.rows);
@@ -127,7 +138,7 @@ app.get('/trains', async (req, res) => {
 });
 
 // Add Train (Admin only)
-app.post('/add-train', async (req, res) => {
+app.post('/add-train',isAuthenticated, async (req, res) => {
   const { train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days } = req.body;
   console.log(operating_days);
   console.log("Admin adding train : ",req.session.adminId);
@@ -160,14 +171,20 @@ app.post('/add-train', async (req, res) => {
 //     res.json({ message: 'Logout successful' });
 //   });
 // });
-app.post("/logout", (req, res) => {
+app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).json({message: "Failed to log out"})
+      console.error(err);
+      return res.status(500).send("Logout failed");
     }
-    res.status(200).json({ message: "Logged out successfully" });
+
+    res.clearCookie("connect.sid");
+    return res.status(200).json({ message: "Logged out" }); // ✅ Clean JSON response
   });
 });
+
+
+
 
 // Start server
 app.listen(port, () => {
