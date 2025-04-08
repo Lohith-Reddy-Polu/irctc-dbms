@@ -343,7 +343,7 @@ app.get("/my-tickets", async (req, res) => {
 //     res.json({ message: 'Logout successful' });
 //   });
 // });
-app.post("/logout", (req, res) => {
+app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error(err);
