@@ -8,6 +8,11 @@ INSERT INTO Train (train_no, train_name, src_stn, dest_stn, arrival_time, depart
 ('12430', 'New Delhi Express', 'Lucknow', 'New Delhi', '11:00', '05:30', ARRAY['Monday','Tuesday','Thursday','Saturday']::day_enum[]),
 ('12801', 'Puri Express', 'Puri', 'New Delhi', '06:45', '20:30', ARRAY['Wednesday','Friday','Sunday']::day_enum[]);
 
+
+INSERT INTO Admin (admin_id,name,password,email) VALUES 
+(1,'DBMS','dbms','dbms@gmail.com');
+
+
 INSERT INTO Seats (train_id, class, bhogi, seat_number, status) VALUES
 
 -- Shatabdi Express (train_id: 1)
