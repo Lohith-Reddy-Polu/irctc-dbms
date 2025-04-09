@@ -15,7 +15,7 @@ const Navbar = ({ isAdmin }) => {
       });
 
       if (response.status === 200) {
-        navigate("/user-login");
+        navigate("/");
       } else {
         console.error("Logout failed");
       }

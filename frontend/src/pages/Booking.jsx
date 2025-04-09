@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState,  useEffect} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Navbar from '../components/Navbar';
 import { apiUrl } from "../config/config";
 
 const Booking = () => {
@@ -8,12 +9,37 @@ const Booking = () => {
   const { train } = state || {};
   
   const [travelDate, setTravelDate] = useState("");
-  const [trainClass, setTrainClass] = useState("Sleeper"); // Default
+  const [trainClass, setTrainClass] = useState("SLP"); // Default
   const [passengers, setPassengers] = useState([
     { name: "", gender: "Male", age: "" },
   ]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        console.log("Checking user status...");
+        const response = await fetch(`${apiUrl}/isUserLoggedIn`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        if (response.status !== 200) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        navigate('/');
+      }
+    };
+
+    checkUser();
+  }
+  , [navigate]);
 
   if (!train) {
     return <div>No train selected. Go back and select a train.</div>;

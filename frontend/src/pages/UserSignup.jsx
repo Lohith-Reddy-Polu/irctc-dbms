@@ -25,6 +25,27 @@ import { apiUrl } from "../config/config";
 const UserSignup = () => {
   const navigate = useNavigate(); // Use this to redirect users
   const [error,setError] = useState(null);
+  
+  useEffect(() => {
+      const checkStatus = async () => {
+        // Implement your logic here
+        try {
+          const response = await fetch(`${apiUrl}/isUserLoggedIn`, {
+            method: "GET",
+            credentials: "include", // Ensures cookies are sent
+          });
+  
+          const data = await response.json();
+          if (response.status === 200) {
+            navigate("/user-dashboard"); // Redirect to dashboard if logged in
+          }
+        } catch (error) {
+          setError("Failed to check login status");
+         // console.error("Error checking login status:", error);
+        }
+      };
+      checkStatus();
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     username: "",

@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
+import Navbar from '../components/Navbar';
 import { apiUrl } from "../config/config";
-
+import { useNavigate } from 'react-router-dom';
 const AddTrainPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     train_no: "",
     train_name: "",
@@ -14,6 +16,31 @@ const AddTrainPage = () => {
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        console.log("Checking user status...");
+        const response = await fetch(`${apiUrl}/isAdminLoggedIn`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        if (response.status !== 200) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        navigate('/');
+      }
+    };
+
+    checkUser();
+  }
+  , [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

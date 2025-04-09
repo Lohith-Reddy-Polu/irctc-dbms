@@ -53,15 +53,16 @@ function isAuthenticated(req, res, next) {
   if(req.session.userId || req.session.adminId){
     return next();
   }
-  return res.redirect('/');
+  return res.status(400).json( {message: "Unauthorized" });
+  // return res.redirect('/');
 }
 
 function isLoggedIn(req, res, next) {
   if(req.session.userId){
-    return res.redirect('/user-dashboard');
+    return res.status(200).json({ loggedIn: true, userId: req.session.userId });
   }
   else if(req.session.adminId){
-    return res.redirect('/admin-dashboard');
+    return res.status(200).json({ loggedIn: true, adminId: req.session.adminId });
   }
   return next();
 }
@@ -204,26 +205,26 @@ app.post('/add-train',isAuthenticated, async (req, res) => {
   }
 });
 
-app.post("/book-ticket", async (req, res) => {
+app.post("/book-ticket",isAuthenticated, async (req, res) => {
   const { train_id, travel_date, train_class, passengers } = req.body;
   const user_id = req.session.userId;
-
+  console.log("seats available: ",req.body);
   if (!user_id || !train_id || !travel_date || !train_class || !Array.isArray(passengers)) {
     return res.status(400).json({ error: "Missing required booking data" });
   }
-
-  const client = await pool.connect();
+  
+  // const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
-
+    await pool.query("BEGIN");
+    
     // 1. Generate unique PNR
     const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
 
     // 2. Insert into Booking
     const booking_date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
-    const bookingRes = await client.query(
+    const bookingRes = await pool.query(
       `INSERT INTO Booking (user_id, train_id, pnr_number, travel_date, booking_date, booking_status, total_fare)
        VALUES ($1, $2, $3, $4, $5, 'Confirmed', 100)
        RETURNING booking_id`,
@@ -233,7 +234,7 @@ app.post("/book-ticket", async (req, res) => {
     const booking_id = bookingRes.rows[0].booking_id;
 
     // 3. Fetch available seats for the train/class
-    const seatRes = await client.query(
+    const seatRes = await pool.query(
       `SELECT seat_id FROM Seats 
        WHERE train_id = $1 AND class = $2 AND status = 'Available' 
        LIMIT $3 FOR UPDATE`,
@@ -241,43 +242,43 @@ app.post("/book-ticket", async (req, res) => {
     );
 
     if (seatRes.rows.length < passengers.length) {
-      await client.query("ROLLBACK");
+      await pool.query("ROLLBACK");
       return res.status(400).json({ error: "Not enough available seats" });
     }
 
     const seat_ids = seatRes.rows.map(row => row.seat_id);
-
+    
     // 4. Insert Tickets and mark seats as Booked
     for (let i = 0; i < passengers.length; i++) {
       const { name, gender, age } = passengers[i];
       const seat_id = seat_ids[i];
 
-      await client.query(
+      await pool.query(
         `INSERT INTO Ticket (train_id, booking_id, seat_id, passenger_name, gender, age)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [train_id, booking_id, seat_id, name, gender, age]
       );
 
-      await client.query(
+      await pool.query(
         `UPDATE Seats SET status = 'Booked' WHERE seat_id = $1`,
         [seat_id]
       );
     }
 
-    await client.query("COMMIT");
+    await pool.query("COMMIT");
 
     return res.status(200).json({ message: "Booking successful", pnr_number });
 
   } catch (err) {
-    await client.query("ROLLBACK");
+    await pool.query("ROLLBACK");
     console.error("Booking error:", err);
     return res.status(500).json({ error: "Internal server error" });
   } finally {
-    client.release();
+    // client.release();
   }
 });
 
-app.get("/my-tickets", async (req, res) => {
+app.get("/my-tickets", isAuthenticated,async (req, res) => {
   const user_id = req.session.userId;
   if (!user_id) return res.status(401).json({ error: "Not logged in" });
 

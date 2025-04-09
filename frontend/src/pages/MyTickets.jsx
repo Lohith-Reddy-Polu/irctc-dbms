@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { apiUrl } from "../config/config";
 import axios from "axios";
 
 const MyTickets = () => {
@@ -8,7 +9,7 @@ const MyTickets = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/my-tickets", {
+        const res = await axios.get(`${apiUrl}/my-tickets`, {
           withCredentials: true,
         });
         setBookings(res.data);
