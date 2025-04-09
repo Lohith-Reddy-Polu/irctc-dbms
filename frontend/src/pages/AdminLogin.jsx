@@ -18,6 +18,10 @@ const AdminLogin = () => {
             if (response.status === 200) {
               navigate("/admin-dashboard"); // Redirect to dashboard if logged in
             }
+            else{
+              console.log("Not logged in");
+              console.log(data);
+            }
           } catch (error) {
             setError("Failed to check login status");
            // console.error("Error checking login status:", error);

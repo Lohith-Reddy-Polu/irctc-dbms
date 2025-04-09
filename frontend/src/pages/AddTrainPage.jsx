@@ -13,6 +13,12 @@ const AddTrainPage = () => {
     departure_time: "",
     operating_days: "",
   });
+  const [seatCounts, setSeatCounts] = useState({
+    "SLP": 0,
+    "3AC": 0,
+    "2AC": 0,
+    "1AC": 0
+  });
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -49,6 +55,13 @@ const AddTrainPage = () => {
       [name]: value,
     });
   };
+  const handleSeatChange = (e) => {
+    const { name, value } = e.target;
+    setSeatCounts({
+      ...seatCounts,
+      [name]: parseInt(value)
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +73,7 @@ const AddTrainPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials : 'include',
-        body: JSON.stringify(formData),
+        body: JSON.stringify({...formData, seatCounts}),
       });
       console.log("WOWOWOW");
       const data = await response.json();
@@ -159,6 +172,22 @@ const AddTrainPage = () => {
             required
           />
         </label>
+        <label>
+        Sleeper Seats:
+        <input type="number" name="SLP" value={seatCounts["SLP"]} onChange={handleSeatChange} />
+      </label><br />
+      <label>
+        3AC Seats:
+        <input type="number" name="3AC" value={seatCounts["3AC"]} onChange={handleSeatChange} />
+      </label><br />
+      <label>
+        2AC Seats:
+        <input type="number" name="2AC" value={seatCounts["2AC"]} onChange={handleSeatChange} />
+      </label><br />
+      <label>
+        1AC Seats:
+        <input type="number" name="1AC" value={seatCounts["1AC"]} onChange={handleSeatChange} />
+      </label><br />
         <br />
         <button type="submit">Add Train</button>
       </form>

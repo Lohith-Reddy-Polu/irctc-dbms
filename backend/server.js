@@ -182,28 +182,84 @@ app.get('/trains',isAuthenticated, async (req, res) => {
 });
 
 // Add Train (Admin only)
-app.post('/add-train',isAuthenticated, async (req, res) => {
-  const { train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days } = req.body;
-  console.log(operating_days);
-  console.log("Admin adding train : ",req.session.adminId);
+// app.post('/add-train',isAuthenticated, async (req, res) => {
+//   const { train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days } = req.body;
+//   console.log(operating_days);
+//   console.log("Admin adding train : ",req.session.adminId);
+//   if (!req.session.adminId) {
+//     return res.status(403).json({ error: 'Unauthorized' });
+//   }
+//   try {
+//     const result = await pool.query(
+//       `INSERT INTO Train (train_no, train_name, src_stn, dest_stn,
+//         arrival_time, departure_time, operating_days)
+//        VALUES ($1, $2, $3, $4, $5, $6, $7)
+//        RETURNING train_id`,
+//       [train_no, train_name, src_stn, dest_stn,
+//         arrival_time, departure_time,
+//         operating_days]
+//     );
+//     res.status(201).json({ message: 'Train added successfully!', train: result.rows[0] });
+//   } catch (error) {
+//     handleDbError(res, error);
+//   }
+// });
+
+app.post('/add-train', isAuthenticated, async (req, res) => {
+  const {
+    train_no, train_name, src_stn, dest_stn,
+    arrival_time, departure_time, operating_days,
+    seatCounts
+  } = req.body;
+
   if (!req.session.adminId) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
+
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+    const result = await client.query(
       `INSERT INTO Train (train_no, train_name, src_stn, dest_stn,
         arrival_time, departure_time, operating_days)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING train_id`,
       [train_no, train_name, src_stn, dest_stn,
-        arrival_time, departure_time,
-        operating_days]
+        arrival_time, departure_time, operating_days]
     );
-    res.status(201).json({ message: 'Train added successfully!', train: result.rows[0] });
+
+    const trainId = result.rows[0].train_id;
+
+    const bhogi = 'B1'; // using 'B1' by default
+    let insertValues = [];
+    let index = 1;
+
+    for (const cls of ['SLP', '3AC', '2AC', '1AC']) {
+      const count = seatCounts[cls];
+      for (let i = 1; i <= count; i++) {
+        insertValues.push(`(${trainId}, '${cls}', '${bhogi}', ${i}, 'Available')`);
+      }
+    }
+
+    if (insertValues.length > 0) {
+      const seatsQuery = `
+        INSERT INTO Seats (train_id, class, bhogi, seat_number, status)
+        VALUES ${insertValues.join(",")}
+      `;
+      await client.query(seatsQuery);
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Train and seats added successfully!', train: result.rows[0] });
   } catch (error) {
-    handleDbError(res, error);
+    await client.query('ROLLBACK');
+    console.error("Add train error:", error);
+    res.status(500).json({ error: 'Failed to add train and seats' });
+  } finally {
+    client.release();
   }
 });
+
 
 app.post("/book-ticket",isAuthenticated, async (req, res) => {
   const { train_id, travel_date, train_class, passengers } = req.body;
