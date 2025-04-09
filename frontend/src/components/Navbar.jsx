@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { apiUrl } from "../config/config";
+import './Navbar.css';
 
 const Navbar = ({ isAdmin }) => {
   const navigate = useNavigate();
@@ -28,14 +29,18 @@ const Navbar = ({ isAdmin }) => {
     <nav>
       <ul>
         {!isAdmin && (
+          <>
           <li>
             <button onClick={() => navigate("/user-dashboard")}>
               User Dashboard
             </button>
+         </li>
+            <li>
             <button onClick={() => navigate("/my-tickets")}>
               My Tickets
             </button>
           </li>
+          </>
         )}
         {isAdmin && (
           <>

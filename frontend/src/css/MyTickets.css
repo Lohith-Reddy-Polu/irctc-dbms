@@ -1,0 +1,73 @@
+/* MyTickets.css */
+
+.my-tickets-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .my-tickets-container h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #2c3e50;
+  }
+  
+  .ticket-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-left: 6px solid #007bff;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+    margin-bottom: 30px;
+    transition: transform 0.2s ease;
+  }
+  
+  .ticket-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .ticket-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #007bff;
+    margin-bottom: 10px;
+  }
+  
+  .ticket-info p {
+    margin: 6px 0;
+    color: #555;
+  }
+  
+  .ticket-info .label {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .passenger-list {
+    margin-top: 16px;
+    padding-left: 18px;
+    color: #444;
+  }
+  
+  .passenger-list li {
+    margin-bottom: 6px;
+  }
+  
+  .error-message {
+    color: red;
+    text-align: center;
+    font-weight: 500;
+    margin-top: 20px;
+  }
+  
+  .no-bookings {
+    text-align: center;
+    font-size: 18px;
+    color: #777;
+    margin-top: 30px;
+  }
+  

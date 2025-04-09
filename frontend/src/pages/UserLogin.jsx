@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiUrl } from "../config/config";
+import '../css/UserLogin.css';
 
 const UserLogin = () => {
   const navigate = useNavigate();
@@ -63,40 +64,75 @@ const UserLogin = () => {
     }
   };
 
+  // return (
+  //   <div>
+  //     <h2>Login</h2>
+  //     {error ? <p style={{ color: "red" }}>{error}</p> : null}
+  //     <form onSubmit={handleSubmit}>
+  //       <label>
+  //         Email:
+  //         <input
+  //           type="email"
+  //           name="email"
+  //           value={formData.email}
+  //           onChange={handleChange}
+  //           required
+  //         />
+  //       </label>
+  //       <br />
+  //       <label>
+  //         Password:
+  //         <input
+  //           type="password"
+  //           name="password"
+  //           value={formData.password}
+  //           onChange={handleChange}
+  //           required
+  //         />
+  //       </label>
+  //       <br />
+  //       <button type="submit">Login</button>
+  //     </form>
+  //     <p>
+  //       Don't have an account? <a href="/user-signup">Sign up here</a>
+  //     </p>
+  //   </div>
+  // );
   return (
-    <div>
-      <h2>Login</h2>
-      {error ? <p style={{ color: "red" }}>{error}</p> : null}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email:
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Password:
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <button type="submit">Login</button>
-      </form>
-      <p>
-        Don't have an account? <a href="/user-signup">Sign up here</a>
-      </p>
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Login</h2>
+        {error ? <p className="error">{error}</p> : null}
+        <form onSubmit={handleSubmit}>
+          <label>
+            Email:
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <label>
+            Password:
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <button type="submit">Login</button>
+        </form>
+        <p>
+          Don't have an account? <a href="/user-signup">Sign up here</a>
+        </p>
+      </div>
     </div>
   );
+  
 };
 
 export default UserLogin;

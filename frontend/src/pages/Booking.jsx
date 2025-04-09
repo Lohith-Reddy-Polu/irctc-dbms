@@ -2,6 +2,7 @@ import React, { useState,  useEffect} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from '../components/Navbar';
 import { apiUrl } from "../config/config";
+import '../css/Booking.css';
 
 const Booking = () => {
   const { state } = useLocation();
@@ -94,55 +95,108 @@ const Booking = () => {
   };
 
   return (
-    <div>
-      <h2>Book Train: {train.train_name}</h2>
+    // <div>
+    //    <Navbar isAdmin={false} />
+    //   <h2>Book Train: {train.train_name}</h2>
 
-      <label>Travel Date:</label>
-      <input type="date" value={travelDate} onChange={(e) => setTravelDate(e.target.value)} />
+    //   <label>Travel Date:</label>
+    //   <input type="date" value={travelDate} onChange={(e) => setTravelDate(e.target.value)} />
 
-      <label>Class:</label>
-      <select value={trainClass} onChange={(e) => setTrainClass(e.target.value)}>
-        <option value="SLP">Sleeper</option>
-        <option value="3AC">3rd AC</option>
-        <option value="2AC">2vd AC</option>
-        <option value="1AC">1st AC</option>
-      </select>
+    //   <label>Class:</label>
+    //   <select value={trainClass} onChange={(e) => setTrainClass(e.target.value)}>
+    //     <option value="SLP">Sleeper</option>
+    //     <option value="3AC">3rd AC</option>
+    //     <option value="2AC">2vd AC</option>
+    //     <option value="1AC">1st AC</option>
+    //   </select>
 
-      <h3>Passengers:</h3>
-      {passengers.map((p, idx) => (
-        <div key={idx}>
-          <input
-            type="text"
-            placeholder="Name"
-            value={p.name}
-            onChange={(e) => handlePassengerChange(idx, "name", e.target.value)}
-          />
-          <select
-            value={p.gender}
-            onChange={(e) => handlePassengerChange(idx, "gender", e.target.value)}
-          >
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-          <input
-            type="number"
-            placeholder="Age"
-            value={p.age}
-            onChange={(e) => handlePassengerChange(idx, "age", e.target.value)}
-          />
-          {passengers.length > 1 && (
-            <button onClick={() => removePassenger(idx)}>Remove</button>
-          )}
-        </div>
-      ))}
-      <button onClick={addPassenger}>+ Add Passenger</button>
+    //   <h3>Passengers:</h3>
+    //   {passengers.map((p, idx) => (
+    //     <div key={idx}>
+    //       <input
+    //         type="text"
+    //         placeholder="Name"
+    //         value={p.name}
+    //         onChange={(e) => handlePassengerChange(idx, "name", e.target.value)}
+    //       />
+    //       <select
+    //         value={p.gender}
+    //         onChange={(e) => handlePassengerChange(idx, "gender", e.target.value)}
+    //       >
+    //         <option value="Male">Male</option>
+    //         <option value="Female">Female</option>
+    //       </select>
+    //       <input
+    //         type="number"
+    //         placeholder="Age"
+    //         value={p.age}
+    //         onChange={(e) => handlePassengerChange(idx, "age", e.target.value)}
+    //       />
+    //       {passengers.length > 1 && (
+    //         <button onClick={() => removePassenger(idx)}>Remove</button>
+    //       )}
+    //     </div>
+    //   ))}
+    //   <button onClick={addPassenger}>+ Add Passenger</button>
 
-      <br />
-      <button onClick={handleBooking}>Submit Booking</button>
+    //   <br />
+    //   <button onClick={handleBooking}>Submit Booking</button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
-    </div>
+    //   {error && <p style={{ color: "red" }}>{error}</p>}
+    //   {success && <p style={{ color: "green" }}>{success}</p>}
+    // </div>
+    <div className="booking-container">
+  <Navbar isAdmin={false} />
+  <h2>Book Train: {train.train_name}</h2>
+
+  <label>Travel Date:</label>
+  <input type="date" value={travelDate} onChange={(e) => setTravelDate(e.target.value)} />
+
+  <label>Class:</label>
+  <select value={trainClass} onChange={(e) => setTrainClass(e.target.value)}>
+    <option value="SLP">Sleeper</option>
+    <option value="3AC">3rd AC</option>
+    <option value="2AC">2nd AC</option>
+    <option value="1AC">1st AC</option>
+  </select>
+
+  <div className="passenger-section">
+    <h3>Passengers:</h3>
+    {passengers.map((p, idx) => (
+      <div key={idx} className="passenger">
+        <input
+          type="text"
+          placeholder="Name"
+          value={p.name}
+          onChange={(e) => handlePassengerChange(idx, "name", e.target.value)}
+        />
+        <select
+          value={p.gender}
+          onChange={(e) => handlePassengerChange(idx, "gender", e.target.value)}
+        >
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <input
+          type="number"
+          placeholder="Age"
+          value={p.age}
+          onChange={(e) => handlePassengerChange(idx, "age", e.target.value)}
+        />
+        {passengers.length > 1 && (
+          <button className="remove-btn" onClick={() => removePassenger(idx)}>Remove</button>
+        )}
+      </div>
+    ))}
+    <button className="add-btn" onClick={addPassenger}>+ Add Passenger</button>
+  </div>
+
+  <button className="submit-btn" onClick={handleBooking}>Submit Booking</button>
+
+  {error && <p className="message error">{error}</p>}
+  {success && <p className="message success">{success}</p>}
+</div>
+
   );
 };
 

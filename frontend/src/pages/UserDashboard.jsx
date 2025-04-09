@@ -2,6 +2,7 @@ import React ,{useState,useEffect} from 'react';
 import Navbar from '../components/Navbar';
 import { apiUrl } from '../config/config';
 import { useNavigate } from 'react-router-dom';
+import '../css/UserDashboard.css';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const UserDashboard = () => {
   , [navigate]);
 
   return (
-    <div>
+    <div className="dashboard-container">
       <Navbar isAdmin={false} />
       <h2>User Dashboard</h2>
       <p>Welcome, User {user}</p>

@@ -1,0 +1,52 @@
+/* Entire page styling */
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #e8f5e9, #c8e6c9);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Container for dashboard content */
+  .dashboard-container {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  /* Heading style */
+  .dashboard-container h2 {
+    color: #2e7d32;
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Paragraphs */
+  .dashboard-container p {
+    font-size: 1.2rem;
+    color: #4e342e;
+    margin-bottom: 1rem;
+  }
+  
+  /* Optional: styling the Navbar separately if needed */
+  nav {
+    background-color: #388e3c;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  nav a {
+    color: white;
+    margin: 0 1rem;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  nav a:hover {
+    text-decoration: underline;
+  }
+  

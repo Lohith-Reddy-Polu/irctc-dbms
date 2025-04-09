@@ -2,7 +2,7 @@ import React ,{useState,useEffect} from 'react';
 import Navbar from '../components/Navbar';
 import { apiUrl } from '../config/config';
 import { useNavigate } from 'react-router-dom';
-
+import '../css/AdminDashboard.css';
 
 
 const AdminDashboard = () => {
@@ -32,14 +32,25 @@ const AdminDashboard = () => {
   }
   , [navigate]);
 
+  // return (
+  //   <div>
+  //     <Navbar isAdmin={true} />
+  //     <h2>Admin Dashboard</h2>
+  //     <p>Welcome, Admin {admin}</p>
+  //     <p>Manage trains, view bookings, and more.</p>
+  //   </div>
+  // );
   return (
     <div>
       <Navbar isAdmin={true} />
-      <h2>Admin Dashboard</h2>
-      <p>Welcome, Admin {admin}</p>
-      <p>Manage trains, view bookings, and more.</p>
+      <div className="admin-dashboard-container">
+        <h2>Admin Dashboard</h2>
+        <p><strong>Welcome, Admin {admin}</strong></p>
+        <p>Manage trains, view bookings, and more.</p>
+      </div>
     </div>
   );
+  
 };
 
 export default AdminDashboard;

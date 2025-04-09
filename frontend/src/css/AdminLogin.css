@@ -1,0 +1,67 @@
+/* AdminLogin.css */
+
+.admin-login-container {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .admin-login-container h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 24px;
+    font-size: 1.8rem;
+  }
+  
+  .admin-login-container form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .admin-login-container label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #34495e;
+  }
+  
+  .admin-login-container input[type="email"],
+  .admin-login-container input[type="password"] {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  
+  .admin-login-container input:focus {
+    outline: none;
+    border-color: #3498db;
+  }
+  
+  .admin-login-container button[type="submit"] {
+    background-color: #3498db;
+    color: white;
+    font-size: 1rem;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .admin-login-container button:hover {
+    background-color: #2980b9;
+  }
+  
+  .error-message {
+    color: red;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  

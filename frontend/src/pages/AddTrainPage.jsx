@@ -2,6 +2,7 @@ import React, { useState , useEffect} from "react";
 import Navbar from '../components/Navbar';
 import { apiUrl } from "../config/config";
 import { useNavigate } from 'react-router-dom';
+import '../css/AddTrainPage.css';
 const AddTrainPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -91,6 +92,8 @@ const AddTrainPage = () => {
 
   return (
     <div>
+       <Navbar isAdmin={true} />
+       <div className="add-train-container">
       <h2>Add Train</h2>
       {error ? <p style={{ color: "red" }}>{error}</p> : null}
       {success ? <p style={{ color: "green" }}>{success}</p> : null}
@@ -191,6 +194,7 @@ const AddTrainPage = () => {
         <br />
         <button type="submit">Add Train</button>
       </form>
+    </div>
     </div>
   );
 };

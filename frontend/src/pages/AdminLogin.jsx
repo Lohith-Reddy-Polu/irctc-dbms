@@ -1,7 +1,7 @@
 import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiUrl } from "../config/config";
-
+import '../css/AdminLogin.css';
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
@@ -66,35 +66,62 @@ const AdminLogin = () => {
   };
 
   return (
-    <div>
-      <h2>Admin Login</h2>
-      {error ? <p style={{ color: "red" }}>{error}</p> : null}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email:
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Password:
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <button type="submit">Login</button>
-      </form>
-    </div>
+    // <div>
+    //   <h2>Admin Login</h2>
+    //   {error ? <p style={{ color: "red" }}>{error}</p> : null}
+    //   <form onSubmit={handleSubmit}>
+    //     <label>
+    //       Email:
+    //       <input
+    //         type="email"
+    //         name="email"
+    //         value={formData.email}
+    //         onChange={handleChange}
+    //         required
+    //       />
+    //     </label>
+    //     <br />
+    //     <label>
+    //       Password:
+    //       <input
+    //         type="password"
+    //         name="password"
+    //         value={formData.password}
+    //         onChange={handleChange}
+    //         required
+    //       />
+    //     </label>
+    //     <br />
+    //     <button type="submit">Login</button>
+    //   </form>
+    // </div>
+    <div className="admin-login-container">
+  <h2>Admin Login</h2>
+  {error && <p className="error-message">{error}</p>}
+  <form onSubmit={handleSubmit}>
+    <label htmlFor="email">Email:</label>
+    <input
+      type="email"
+      name="email"
+      id="email"
+      value={formData.email}
+      onChange={handleChange}
+      required
+    />
+
+    <label htmlFor="password">Password:</label>
+    <input
+      type="password"
+      name="password"
+      id="password"
+      value={formData.password}
+      onChange={handleChange}
+      required
+    />
+
+    <button type="submit">Login</button>
+  </form>
+</div>
   );
 };
 
