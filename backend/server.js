@@ -8,6 +8,12 @@ const session = require('express-session');
 const app = express();
 const port = 4000;
 
+
+// extra modules used
+// date-fns 
+// uuid 
+// axios
+
 // PostgreSQL connection
 const pool = new Pool({
   user: 'project',
@@ -180,6 +186,49 @@ app.get('/trains',isAuthenticated, async (req, res) => {
     handleDbError(res, error);
   }
 });
+
+app.get('/stations', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM Stations ORDER BY station_name");
+    res.json(result.rows);
+  } catch (err) {
+    handleDbError(res, err);
+  }
+});
+
+
+const { format } = require('date-fns'); // Add this package if not installed
+
+app.post('/search-trains', isAuthenticated, async (req, res) => {
+  const { srcStn, destStn, travelDate } = req.body;
+
+  if (!srcStn || !destStn || !travelDate) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
+  try {
+    const travelDay = format(new Date(travelDate), 'EEEE'); // e.g., "Wednesday"
+
+    const result = await pool.query(`
+      SELECT DISTINCT t.*
+      FROM Train t
+      JOIN Route r1 ON t.train_id = r1.train_id
+      JOIN Route r2 ON t.train_id = r2.train_id
+      JOIN Stations s1 ON r1.station_id = s1.station_id
+      JOIN Stations s2 ON r2.station_id = s2.station_id
+      WHERE s1.station_name ILIKE $1
+        AND s2.station_name ILIKE $2
+        AND r1.stop_number < r2.stop_number
+        AND $3 = ANY (t.operating_days)
+    `, [srcStn, destStn, travelDay]);
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Search error:", err);
+    handleDbError(res, err);
+  }
+});
+
 
 // Add Train (Admin only)
 // app.post('/add-train',isAuthenticated, async (req, res) => {
