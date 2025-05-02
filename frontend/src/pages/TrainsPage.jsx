@@ -136,7 +136,10 @@ const TrainsPage = () => {
                 <td>
                   <button
                     className="book-btn"
-                    onClick={() => navigate("/book", { state: { train } })}
+                    onClick={() => navigate("/book", { state: { train,
+                                                                travelDate,
+                                                                srcStn,
+                                                                destStn,} })}
                   >
                     Book
                   </button>

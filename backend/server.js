@@ -177,15 +177,17 @@ app.post('/admin-login',isLoggedIn, async (req, res) => {
 });
 
 // Get List of Trains
-app.get('/trains',isAuthenticated, async (req, res) => {
-  console.log("User id : ",req.session.userId);
-  try {
-    const result = await pool.query(`SELECT * FROM Train`);
-    res.status(200).json(result.rows);
-  } catch (error) {
-    handleDbError(res, error);
-  }
-});
+// app.get('/trains',isAuthenticated, async (req, res) => {
+//   console.log("User id : ",req.session.userId);
+//   try {
+//     const result = await pool.query(`SELECT * FROM Train`);
+//     res.status(200).json(result.rows);
+//   } catch (error) {
+//     handleDbError(res, error);
+//   }
+// });
+
+// not using /trains
 
 app.get('/stations', isAuthenticated, async (req, res) => {
   try {
@@ -382,6 +384,85 @@ app.post("/book-ticket",isAuthenticated, async (req, res) => {
     // client.release();
   }
 });
+
+
+// Utility to get all station IDs between source and destination
+async function getStationIdsBetween(train_id, src_id, dest_id) {
+  const result = await pool.query(
+    `SELECT stop_number, station_id FROM Route WHERE train_id = $1 ORDER BY stop_number`,
+    [train_id]
+  );
+
+  const route = result.rows;
+  const srcStop = route.find(r => r.station_id === src_id)?.stop_number;
+  const destStop = route.find(r => r.station_id === dest_id)?.stop_number;
+
+  if (!srcStop || !destStop || srcStop >= destStop) {
+    throw new Error('Invalid route segment');
+  }
+
+  return route
+    .filter(r => r.stop_number >= srcStop && r.stop_number < destStop)
+    .map(r => r.station_id);
+}
+
+app.get('/available-seats', async (req, res) => {
+  try {
+    const { train_id, class: train_class, travel_date, src_stn, dest_stn } = req.query;
+
+    if (!train_id || !train_class || !travel_date || !src_stn || !dest_stn) {
+      return res.status(400).json({ error: "Missing required query parameters" });
+    }
+
+    const segmentStations = await getStationIdsBetween(
+      parseInt(train_id),
+      parseInt(src_stn),
+      parseInt(dest_stn)
+    );
+
+    // Fetch all seats for the specified train and class
+    const allSeats = await pool.query(
+      `SELECT seat_id, bhogi, seat_number FROM Seats
+       WHERE train_id = $1 AND class = $2`,
+      [train_id, train_class]
+    );
+
+    const seatMap = new Map();
+    for (const seat of allSeats.rows) {
+      seatMap.set(seat.seat_id, {
+        ...seat,
+        available: true
+      });
+    }
+
+    // Fetch all bookings for the same date and class
+    const bookings = await pool.query(
+      `SELECT T.seat_id, T.from_station_id, T.to_station_id
+       FROM Ticket T
+       JOIN Booking B ON T.booking_id = B.booking_id
+       WHERE B.train_id = $1 AND B.train_class = $2 AND B.travel_date = $3`,
+      [train_id, train_class, travel_date]
+    );
+
+    // Determine seat availability based on overlapping segments
+    for (const b of bookings.rows) {
+      const bookedSegment = await getStationIdsBetween(train_id, b.from_station_id, b.to_station_id);
+      const overlap = bookedSegment.some(stationId => segmentStations.includes(stationId));
+      if (overlap && seatMap.has(b.seat_id)) {
+        seatMap.get(b.seat_id).available = false;
+      }
+    }
+
+    const result = Array.from(seatMap.values());
+    res.json({ seats: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch seat availability' });
+  }
+});
+
+
+
 
 app.get("/my-tickets", isAuthenticated,async (req, res) => {
   const user_id = req.session.userId;

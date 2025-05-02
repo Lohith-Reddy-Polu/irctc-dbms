@@ -74,16 +74,21 @@ CREATE TABLE Seats (
 );
 
 -- BOOKING
-CREATE TABLE Booking (
-    booking_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
-    train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
-    pnr_number VARCHAR(20) UNIQUE NOT NULL,
+CREATE TABLE bookings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id),
+    train_id INTEGER REFERENCES trains(train_id),
     travel_date DATE NOT NULL,
-    booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    booking_status booking_status_enum NOT NULL,
-    total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
+    seat_number TEXT NOT NULL,
+    train_class TEXT NOT NULL,
+    src_stn INT NOT NULL REFERENCES Stations(station_id),
+    dest_stn INT NOT NULL REFERENCES Stations(station_id),
+    passenger_name TEXT NOT NULL,
+    passenger_age INTEGER,
+    passenger_gender TEXT,
+    pnr_number TEXT NOT NULL
 );
+
 
 -- TICKET: now includes travel segment
 CREATE TABLE Ticket (
