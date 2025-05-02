@@ -55,7 +55,6 @@ CREATE TABLE Booking (
     train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
     pnr_number VARCHAR(20) UNIQUE NOT NULL,
     travel_date DATE NOT NULL,
-    booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
     booking_status booking_status_enum NOT NULL,
     total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
 );

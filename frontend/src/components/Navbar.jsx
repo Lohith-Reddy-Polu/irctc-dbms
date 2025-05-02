@@ -5,7 +5,7 @@ import './Navbar.css';
 
 const Navbar = ({ isAdmin }) => {
   const navigate = useNavigate();
-  console.log("Logout clicked");
+  // console.log("Logout clicked");
   // ✅ Proper logout function
   const handleLogout = async (e) => {
     e.preventDefault();

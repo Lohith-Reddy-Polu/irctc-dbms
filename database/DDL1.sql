@@ -74,32 +74,28 @@ CREATE TABLE Seats (
 );
 
 -- BOOKING
-CREATE TABLE bookings (
-    id SERIAL PRIMARY KEY,
+CREATE TABLE Booking (
+    booking_id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(user_id),
-    train_id INTEGER REFERENCES trains(train_id),
+    train_id INTEGER REFERENCES train(train_id),
     travel_date DATE NOT NULL,
-    seat_number TEXT NOT NULL,
+    booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
     train_class TEXT NOT NULL,
     src_stn INT NOT NULL REFERENCES Stations(station_id),
     dest_stn INT NOT NULL REFERENCES Stations(station_id),
-    passenger_name TEXT NOT NULL,
-    passenger_age INTEGER,
-    passenger_gender TEXT,
-    pnr_number TEXT NOT NULL
+    booking_status booking_status_enum NOT NULL,
+    pnr_number TEXT NOT NULL,
+    CHECK (src_stn <> dest_stn),
+    total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
 );
 
 
 -- TICKET: now includes travel segment
 CREATE TABLE Ticket (
     ticket_id SERIAL PRIMARY KEY,
-    train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
     booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
     seat_id INT NOT NULL REFERENCES Seats(seat_id) ON DELETE CASCADE,
-    from_station_id INT NOT NULL REFERENCES Stations(station_id),
-    to_station_id INT NOT NULL REFERENCES Stations(station_id),
     passenger_name VARCHAR(100) NOT NULL,
-    gender gender_enum NOT NULL,
-    age INT NOT NULL CHECK (age BETWEEN 1 AND 100),
-    CHECK (from_station_id <> to_station_id)
+    passenger_gender gender_enum NOT NULL,
+    passenger_age INT NOT NULL CHECK (passenger_age BETWEEN 1 AND 120)
 );

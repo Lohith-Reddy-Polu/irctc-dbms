@@ -312,121 +312,264 @@ app.post('/add-train', isAuthenticated, async (req, res) => {
 });
 
 
-app.post("/book-ticket",isAuthenticated, async (req, res) => {
-  const { train_id, travel_date, train_class, passengers } = req.body;
-  const user_id = req.session.userId;
-  console.log("seats available: ",req.body);
-  if (!user_id || !train_id || !travel_date || !train_class || !Array.isArray(passengers)) {
-    return res.status(400).json({ error: "Missing required booking data" });
-  }
+// app.post("/book-ticket",isAuthenticated, async (req, res) => {
+//   const { train_id, travel_date, train_class, passengers } = req.body;
+//   const user_id = req.session.userId;
+//   console.log("seats available: ",req.body);
+//   if (!user_id || !train_id || !travel_date || !train_class || !Array.isArray(passengers)) {
+//     return res.status(400).json({ error: "Missing required booking data" });
+//   }
   
-  // const client = await pool.connect();
+//   // const client = await pool.connect();
 
-  try {
-    await pool.query("BEGIN");
+//   try {
+//     await pool.query("BEGIN");
     
-    // 1. Generate unique PNR
+//     // 1. Generate unique PNR
+    // const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
+
+//     // 2. Insert into Booking
+//     const booking_date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+//     const bookingRes = await pool.query(
+//       `INSERT INTO Booking (user_id, train_id, pnr_number, travel_date, booking_date, booking_status, total_fare)
+//        VALUES ($1, $2, $3, $4, $5, 'Confirmed', 100)
+//        RETURNING booking_id`,
+//       [user_id, train_id, pnr_number, travel_date, booking_date]
+//     );
+    
+//     const booking_id = bookingRes.rows[0].booking_id;
+
+//     // 3. Fetch available seats for the train/class
+//     const seatRes = await pool.query(
+//       `SELECT seat_id FROM Seats 
+//        WHERE train_id = $1 AND class = $2 AND status = 'Available' 
+//        LIMIT $3 FOR UPDATE`,
+//       [train_id, train_class, passengers.length]
+//     );
+
+//     if (seatRes.rows.length < passengers.length) {
+//       await pool.query("ROLLBACK");
+//       return res.status(400).json({ error: "Not enough available seats" });
+//     }
+
+//     const seat_ids = seatRes.rows.map(row => row.seat_id);
+    
+//     // 4. Insert Tickets and mark seats as Booked
+//     for (let i = 0; i < passengers.length; i++) {
+//       const { name, gender, age } = passengers[i];
+//       const seat_id = seat_ids[i];
+
+//       await pool.query(
+//         `INSERT INTO Ticket (train_id, booking_id, seat_id, passenger_name, gender, age)
+//          VALUES ($1, $2, $3, $4, $5, $6)`,
+//         [train_id, booking_id, seat_id, name, gender, age]
+//       );
+
+//       await pool.query(
+//         `UPDATE Seats SET status = 'Booked' WHERE seat_id = $1`,
+//         [seat_id]
+//       );
+//     }
+
+//     await pool.query("COMMIT");
+
+//     return res.status(200).json({ message: "Booking successful", pnr_number });
+
+//   } catch (err) {
+//     await pool.query("ROLLBACK");
+//     console.error("Booking error:", err);
+//     return res.status(500).json({ error: "Internal server error" });
+//   } finally {
+//     // client.release();
+//   }
+// });
+
+// Updated /book-ticket endpoint to handle multiple seats and passengers
+app.post('/book-ticket', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const {
+      train_id,
+      travel_date,
+      train_class,
+      srcStn,
+      destStn,
+      seats
+    } = req.body;
+
+    const booking_date = new Date().toISOString().split('T')[0];
+    const booking_status = 'Confirmed';
     const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
 
-    // 2. Insert into Booking
-    const booking_date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    const bookingRes = await pool.query(
-      `INSERT INTO Booking (user_id, train_id, pnr_number, travel_date, booking_date, booking_status, total_fare)
-       VALUES ($1, $2, $3, $4, $5, 'Confirmed', 100)
-       RETURNING booking_id`,
-      [user_id, train_id, pnr_number, travel_date, booking_date]
-    );
-    
-    const booking_id = bookingRes.rows[0].booking_id;
-
-    // 3. Fetch available seats for the train/class
-    const seatRes = await pool.query(
-      `SELECT seat_id FROM Seats 
-       WHERE train_id = $1 AND class = $2 AND status = 'Available' 
-       LIMIT $3 FOR UPDATE`,
-      [train_id, train_class, passengers.length]
-    );
-
-    if (seatRes.rows.length < passengers.length) {
-      await pool.query("ROLLBACK");
-      return res.status(400).json({ error: "Not enough available seats" });
+    // Get user_id from session
+    const user_id = req.session.userId;
+    if (!user_id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const src_stn_id_q = await pool.query(`Select station_id from stations where station_name = $1`, [srcStn]);
+    const dest_stn_id_q = await pool.query(`Select station_id from stations where station_name = $1`, [destStn]);
+    const src_stn_id = src_stn_id_q.rows[0].station_id;
+    const dest_stn_id = dest_stn_id_q.rows[0].station_id;
+    // Validate input
+    if (!train_id || !travel_date || !train_class || !src_stn_id || !dest_stn_id || !seats || !seats.length) {
+      return res.status(400).json({ error: 'Missing required booking fields' });
     }
 
-    const seat_ids = seatRes.rows.map(row => row.seat_id);
-    
-    // 4. Insert Tickets and mark seats as Booked
-    for (let i = 0; i < passengers.length; i++) {
-      const { name, gender, age } = passengers[i];
-      const seat_id = seat_ids[i];
+    // Validate each seat entry
+    for (const seat of seats) {
+      if (!seat.seat_id || !seat.passenger_name || !seat.passenger_gender || !seat.passenger_age) {
+        return res.status(400).json({ error: 'Missing passenger or seat details' });
+      }
+    }
 
-      await pool.query(
-        `INSERT INTO Ticket (train_id, booking_id, seat_id, passenger_name, gender, age)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [train_id, booking_id, seat_id, name, gender, age]
-      );
+    await client.query('BEGIN');
 
-      await pool.query(
-        `UPDATE Seats SET status = 'Booked' WHERE seat_id = $1`,
-        [seat_id]
+    // Generate a PNR - using UUID for more uniqueness
+    // const pnr = 'PNR' + Date.now() + Math.floor(Math.random() * 1000);
+
+    // Create a single booking record for all seats
+    const bookingResult = await client.query(
+      `INSERT INTO Booking (
+        user_id, train_id, travel_date , booking_date , train_class,
+        src_stn, dest_stn,booking_status, pnr_number, total_fare
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING booking_id`,
+      [
+        user_id, train_id, travel_date , booking_date , train_class,
+        src_stn_id, dest_stn_id, booking_status, pnr_number, 0
+      ]
+    );
+
+    const booking_id = bookingResult.rows[0].booking_id;
+
+    // Insert a ticket for each passenger/seat
+    for (const seat of seats) {
+      await client.query(
+        `INSERT INTO Ticket (
+          booking_id, seat_id,
+          passenger_name, passenger_gender, passenger_age
+        )
+        VALUES ($1,$2,$3,$4,$5)`,
+        [
+          booking_id, seat.seat_id,
+          seat.passenger_name, seat.passenger_gender, seat.passenger_age
+        ]
       );
     }
 
-    await pool.query("COMMIT");
+    await client.query('COMMIT');
 
-    return res.status(200).json({ message: "Booking successful", pnr_number });
+    res.status(200).json({
+      message: 'Tickets booked successfully!',
+      booking_id,
+      pnr_number: pnr_number,
+      num_tickets: seats.length
+    });
 
   } catch (err) {
-    await pool.query("ROLLBACK");
-    console.error("Booking error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    await client.query('ROLLBACK');
+    console.error('Booking failed:', err);
+    res.status(500).json({ error: 'Ticket booking failed. Please try again.' });
   } finally {
-    // client.release();
+    client.release();
   }
 });
 
-
 // Utility to get all station IDs between source and destination
 async function getStationIdsBetween(train_id, src_id, dest_id) {
-  const result = await pool.query(
-    `SELECT stop_number, station_id FROM Route WHERE train_id = $1 ORDER BY stop_number`,
-    [train_id]
-  );
+  try {
+    
+    const result = await pool.query(
+      `SELECT stop_number, station_id FROM Route WHERE train_id = $1 ORDER BY stop_number`,
+      [train_id]
+    );
+    // console.log(result.rows);
+    // console.log(src_id);
+    // console.log(dest_id);
+    const route = result.rows;
+    const srcStop = route.find(r => r.station_id === src_id)?.stop_number;
+    const destStop = route.find(r => r.station_id === dest_id)?.stop_number;
+    // console.log(srcStop);
+    // console.log(destStop);
+    
+    if (!srcStop) {
+      console.error(`[ERROR] Source station ID ${src_id} not found in route`);
+      throw new Error(`Source station ID ${src_id} not found in route`);
+    }
+    
+    if (!destStop) {
+      console.error(`[ERROR] Destination station ID ${dest_id} not found in route`);
+      throw new Error(`Destination station ID ${dest_id} not found in route`);
+    }
+    
+    if (srcStop >= destStop) {
+      console.error(`[ERROR] Invalid route direction: srcStop=${srcStop}, destStop=${destStop}`);
+      throw new Error('Invalid route segment: source must come before destination');
+    }
 
-  const route = result.rows;
-  const srcStop = route.find(r => r.station_id === src_id)?.stop_number;
-  const destStop = route.find(r => r.station_id === dest_id)?.stop_number;
-
-  if (!srcStop || !destStop || srcStop >= destStop) {
-    throw new Error('Invalid route segment');
+    // Include stations at both source and destination stops
+    const filteredStations = route
+      .filter(r => r.stop_number >= srcStop && r.stop_number < destStop)
+      .map(r => r.station_id);
+      
+    
+    return filteredStations;
+  } catch (error) {
+    console.error(`[ERROR] Error in getStationIdsBetween: ${error.message}`);
+    throw error;
   }
-
-  return route
-    .filter(r => r.stop_number >= srcStop && r.stop_number < destStop)
-    .map(r => r.station_id);
 }
 
 app.get('/available-seats', async (req, res) => {
+  
   try {
     const { train_id, class: train_class, travel_date, src_stn, dest_stn } = req.query;
 
     if (!train_id || !train_class || !travel_date || !src_stn || !dest_stn) {
+      console.error(`[ERROR] Missing required parameters:`, {
+        train_id: !!train_id,
+        train_class: !!train_class,
+        travel_date: !!travel_date,
+        src_stn: !!src_stn,
+        dest_stn: !!dest_stn
+      });
       return res.status(400).json({ error: "Missing required query parameters" });
     }
 
-    const segmentStations = await getStationIdsBetween(
-      parseInt(train_id),
-      parseInt(src_stn),
-      parseInt(dest_stn)
-    );
+    // Parse input parameters
+    const trainId = parseInt(train_id);
+
+    // Validate numeric parameters
+    if (isNaN(trainId) ) {
+      console.error(`[ERROR] Invalid numeric parameters:`, {
+        trainId: isNaN(trainId) ? 'NaN' : trainId
+      });
+      return res.status(400).json({ error: "Invalid numeric parameters" });
+    }
+
+
+    // Get all stations in the requested journey segment
+    const src_stn_id = await pool.query(`Select station_id from stations where station_name = $1`, [src_stn]);
+    const dest_stn_id = await pool.query(`Select station_id from stations where station_name = $1`, [dest_stn]);
+    const segmentStations = await getStationIdsBetween(trainId, src_stn_id.rows[0].station_id, dest_stn_id.rows[0].station_id);
 
     // Fetch all seats for the specified train and class
-    const allSeats = await pool.query(
-      `SELECT seat_id, bhogi, seat_number FROM Seats
-       WHERE train_id = $1 AND class = $2`,
-      [train_id, train_class]
-    );
+    const allSeatsQuery = `
+      SELECT seat_id, bhogi, seat_number 
+      FROM Seats
+      WHERE train_id = $1 AND class = $2
+      ORDER BY bhogi, seat_number
+    `;
+    
+    const allSeats = await pool.query(allSeatsQuery, [trainId, train_class]);
+    
+    if (allSeats.rows.length === 0) {
+      console.warn(`[WARN] No seats found for train ${trainId}, class ${train_class}`);
+    }
 
+    // Create a map with all seats initially marked as available
     const seatMap = new Map();
     for (const seat of allSeats.rows) {
       seatMap.set(seat.seat_id, {
@@ -435,34 +578,81 @@ app.get('/available-seats', async (req, res) => {
       });
     }
 
-    // Fetch all bookings for the same date and class
-    const bookings = await pool.query(
-      `SELECT T.seat_id, T.from_station_id, T.to_station_id
-       FROM Ticket T
-       JOIN Booking B ON T.booking_id = B.booking_id
-       WHERE B.train_id = $1 AND B.train_class = $2 AND B.travel_date = $3`,
-      [train_id, train_class, travel_date]
-    );
+    // Fetch all bookings for the same date and class that might affect our journey
+    const bookingsQuery = `
+      SELECT T.seat_id, B.src_stn, B.dest_stn
+      FROM Ticket T 
+      JOIN Booking B ON T.booking_id = B.booking_id
+      WHERE B.train_id = $1 AND B.train_class = $2 AND B.travel_date = $3
+    `;
+    
+    const bookings = await pool.query(bookingsQuery, [trainId, train_class, travel_date]);
+
+    // console.log(bookings.rows);
+
+    // Detailed logging of each booking
+    if (bookings.rows.length > 0) {
+    }
 
     // Determine seat availability based on overlapping segments
-    for (const b of bookings.rows) {
-      const bookedSegment = await getStationIdsBetween(train_id, b.from_station_id, b.to_station_id);
-      const overlap = bookedSegment.some(stationId => segmentStations.includes(stationId));
-      if (overlap && seatMap.has(b.seat_id)) {
-        seatMap.get(b.seat_id).available = false;
+    let unavailableCount = 0;
+    for (const booking of bookings.rows) {
+      try {
+        // const stnnames1 = await pool.query(`Select station_name from stations where station_id = $1`, [booking.from_station_id]);
+        // const stnnames2 = await pool.query(`Select station_name from stations where station_id = $1`, [booking.to_station_id]);
+        // Get stations in the booked segment
+        const bookedSegmentStations = await getStationIdsBetween(
+          trainId, 
+          booking.src_stn, 
+          booking.dest_stn,
+        );
+        
+        
+        // Check if any station appears in both the booked segment and our journey
+        const overlappingStations = segmentStations.filter(stationId => 
+          bookedSegmentStations.includes(stationId)
+        );
+        
+        const hasOverlap = overlappingStations.length > 0;
+
+        // If there's an overlap in the route segments, mark the seat as unavailable
+        if (hasOverlap && seatMap.has(booking.seat_id)) {
+          seatMap.get(booking.seat_id).available = false;
+          unavailableCount++;
+        }
+      } catch (error) {
+        // Continue with the next booking even if one fails
       }
     }
 
+    // Convert the map back to an array for response
     const result = Array.from(seatMap.values());
+    const availableCount = result.filter(s => s.available).length;
+    
+    
+    // Detailed seat availability breakdown by bhogi (coach)
+    const seatsByBhogi = {};
+    result.forEach(seat => {
+      if (!seatsByBhogi[seat.bhogi]) {
+        seatsByBhogi[seat.bhogi] = { total: 0, available: 0 };
+      }
+      seatsByBhogi[seat.bhogi].total++;
+      if (seat.available) {
+        seatsByBhogi[seat.bhogi].available++;
+      }
+    });
+    
+    
+    // Print first 10 available seats and first 10 unavailable seats for debug
+    const sampleAvailable = result.filter(s => s.available).slice(0, 10);
+    const sampleUnavailable = result.filter(s => !s.available).slice(0, 10);
+    
+    
     res.json({ seats: result });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch seat availability' });
+    res.status(500).json({ error: 'Failed to fetch seat availability: ' + err.message });
   }
 });
-
-
-
 
 app.get("/my-tickets", isAuthenticated,async (req, res) => {
   const user_id = req.session.userId;
@@ -474,7 +664,7 @@ app.get("/my-tickets", isAuthenticated,async (req, res) => {
          B.booking_id, B.pnr_number, B.travel_date, B.booking_date, 
          B.booking_status, B.total_fare,
          T.train_id, T.train_name, T.train_no,
-         Tk.ticket_id, Tk.passenger_name, Tk.gender, Tk.age, 
+         Tk.ticket_id, Tk.passenger_name, Tk.passenger_gender, Tk.passenger_age, 
          S.seat_id, S.class, S.bhogi, S.seat_number
        FROM Booking B
        JOIN Train T ON B.train_id = T.train_id
@@ -504,8 +694,8 @@ app.get("/my-tickets", isAuthenticated,async (req, res) => {
       grouped[row.booking_id].passengers.push({
         ticket_id: row.ticket_id,
         name: row.passenger_name,
-        gender: row.gender,
-        age: row.age,
+        gender: row.passenger_gender,
+        age: row.passenger_age,
         class: row.class,
         bhogi: row.bhogi,
         seat_number: row.seat_number

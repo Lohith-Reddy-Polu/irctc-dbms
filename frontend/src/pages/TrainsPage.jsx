@@ -15,6 +15,7 @@ const TrainsPage = () => {
 
   useEffect(() => {
     const fetchStations = async () => {
+      console.log("hi")
       try {
         const response = await fetch(`${apiUrl}/stations`, {
           method: "GET",
@@ -44,7 +45,6 @@ const TrainsPage = () => {
       setError("Please fill in all fields.");
       return;
     }
-
     try {
       const res = await fetch(`${apiUrl}/search-trains`, {
         method: "POST",
@@ -139,7 +139,7 @@ const TrainsPage = () => {
                     onClick={() => navigate("/book", { state: { train,
                                                                 travelDate,
                                                                 srcStn,
-                                                                destStn,} })}
+                                                                destStn} })}
                   >
                     Book
                   </button>
