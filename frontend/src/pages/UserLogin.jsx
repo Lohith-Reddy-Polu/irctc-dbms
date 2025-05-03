@@ -64,40 +64,10 @@ const UserLogin = () => {
     }
   };
 
-  // return (
-  //   <div>
-  //     <h2>Login</h2>
-  //     {error ? <p style={{ color: "red" }}>{error}</p> : null}
-  //     <form onSubmit={handleSubmit}>
-  //       <label>
-  //         Email:
-  //         <input
-  //           type="email"
-  //           name="email"
-  //           value={formData.email}
-  //           onChange={handleChange}
-  //           required
-  //         />
-  //       </label>
-  //       <br />
-  //       <label>
-  //         Password:
-  //         <input
-  //           type="password"
-  //           name="password"
-  //           value={formData.password}
-  //           onChange={handleChange}
-  //           required
-  //         />
-  //       </label>
-  //       <br />
-  //       <button type="submit">Login</button>
-  //     </form>
-  //     <p>
-  //       Don't have an account? <a href="/user-signup">Sign up here</a>
-  //     </p>
-  //   </div>
-  // );
+  const handleForgotPassword = () => {
+    navigate("/forgot-password"); // Navigate to forgot password page
+  };
+
   return (
     <div className="login-container">
       <div className="login-box">
@@ -129,6 +99,9 @@ const UserLogin = () => {
         <p>
           Don't have an account? <a href="/user-signup">Sign up here</a>
         </p>
+        <p>
+          <a href="#" onClick={handleForgotPassword}>Forgot Password?</a>
+      </p>
       </div>
     </div>
   );

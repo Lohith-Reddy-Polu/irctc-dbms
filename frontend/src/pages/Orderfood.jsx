@@ -39,7 +39,7 @@ const OrderFood = () => {
       setError('');
       setConfirmation('');
       const data = await validatePNR(pnr);
-      setBooking(data);
+      setBooking(data.booking);
 
       const res = await fetch(`${apiUrl}/food-items`, {
         method: "GET", 

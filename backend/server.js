@@ -865,17 +865,21 @@ app.post('/validate-pnr', async (req, res) => {
 
   try {
     const query = `
-      SELECT booking_id, user_id, train_id, travel_date, booking_status, src_stn, dest_stn
-      FROM Booking
-      WHERE pnr_number = $1 AND user_id = $2
+      SELECT 
+        b.booking_id, b.train_id, b.travel_date, b.booking_status, 
+        b.src_stn, b.dest_stn, b.total_fare, 
+        t.ticket_id, t.passenger_name, t.passenger_gender, t.passenger_age, t.seat_id
+      FROM Booking b
+      JOIN Ticket t ON b.booking_id = t.booking_id
+      WHERE b.pnr_number = $1 AND b.user_id = $2
     `;
     const result = await pool.query(query, [pnrNumber, userId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'PNR not found' });
+      return res.status(404).json({ error: 'PNR not found or no tickets available' });
     }
 
-    res.json(result.rows[0]);
+    res.json({ booking: result.rows[0], tickets: result.rows });
   } catch (err) {
     console.error('Error validating PNR:', err);
     res.status(500).json({ error: 'Server error' });
@@ -924,6 +928,88 @@ app.post('/order-food', async (req, res) => {
     await pool.query('ROLLBACK');
     console.error('Error placing order:', err);
     res.status(500).json({ error: 'Failed to place order' });
+  }
+});
+
+
+//////////////////////////Forgot Password//////////////////////////////////
+
+const generateOTP = () => {
+  // Generates a 6-digit OTP
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const sendOtp = async (toEmail,otp) => {
+  // Generate OTP
+
+  const mailOptions = {
+    from: "mybookingsystem1@gmail.com",
+    to: toEmail,
+    subject: "Your OTP for Confirmation",
+    text: `Your OTP for confirmation is: ${otp}\n\nPlease use this OTP to confirm your action.\n\nThank you!`,
+  };
+
+  // Send the OTP email
+  await transporter.sendMail(mailOptions);
+};
+
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const otp = generateOTP();
+    req.session.otp=otp;
+    req.session.usermail=email;
+    console.log(req.session.usermail);
+    sendOtp(email,otp);
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (err) {
+    console.error('Failed sending OTP: ', err);
+    res.status(500).json({ error: 'Failed sending OTP. Please try again.' });
+  }
+});
+app.post('/verify-otp', async (req, res) => {
+  console.log(req.body);
+  const { otp } = req.body;
+  try {
+    const otp1 = req.session.otp;
+    console.log(otp);
+    console.log(otp1);
+    if(otp == otp1){
+
+    res.status(200).json({ message: 'OTP Verified' });
+   }
+   else{
+    res.status(500).json({ error: 'OTP not verified' });
+   }
+
+  } catch (err) {
+    res.status(500).json({ error: 'OTP not verified1' });
+  }
+});
+app.post('/new-password', async (req, res) => {
+  const { newPassword } = req.body;
+  try {
+    const email = req.session.usermail;
+    if (!email) {
+      return res.status(400).json({ error: 'No session found. Please request password reset again.' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10); // Using bcrypt to hash the password
+    const updateQuery = `
+      UPDATE Users
+      SET password = $1
+      WHERE email = $2
+      RETURNING *
+    `;
+    const result = await pool.query(updateQuery, [hashedPassword, email]);
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: 'Password updated successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+
+  } catch (err) {
+    console.error('Error updating password: ', err);
+    res.status(500).json({ error: 'Failed to update password. Please try again.' });
   }
 });
 
