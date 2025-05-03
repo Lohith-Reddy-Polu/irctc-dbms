@@ -71,12 +71,14 @@ const OrderFood = () => {
 
   const removeFromCart = (item) => {
     const existingItem = cart.find(c => c.id === item.id);
-    if (existingItem.quantity > 1) {
-      setCart(cart.map(c => 
-        c.id === item.id ? { ...c, quantity: c.quantity - 1 } : c
-      ));
-    } else {
-      setCart(cart.filter(c => c.id !== item.id));
+    if(existingItem){
+        if (existingItem.quantity > 1) {
+        setCart(cart.map(c => 
+            c.id === item.id ? { ...c, quantity: c.quantity - 1 } : c
+        ));
+        } else {
+        setCart(cart.filter(c => c.id !== item.id));
+        }
     }
   };
 

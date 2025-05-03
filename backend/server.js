@@ -472,7 +472,8 @@ app.post('/book-ticket', async (req, res) => {
     const booking_date = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
 
     const booking_status = 'Confirmed';
-    const pnr_number =  Date.now() + Math.floor(Math.random() * 1000);
+    const currentTime = new Date();
+    const pnr_number = Date.now() + currentTime.getHours() * 10000 + currentTime.getMinutes() * 100 + currentTime.getSeconds();
 
     // Get user_id from session
     const user_id = req.session.userId;
