@@ -10,6 +10,14 @@
   color: #333;
 }
 
+.passenger.waitlisted {
+  background-color: #fff3e0;
+  border: 1px solid #ffb74d;
+}
+
+.passenger.waitlisted .passenger-number {
+  background-color: #ff9800;
+}
 .booking-form {
   display: flex;
   flex-direction: column;
@@ -35,6 +43,10 @@
   padding: 1rem;
   border-radius: 8px;
   background-color: #f9f9f9;
+}
+
+.passenger-section h3:first-child {
+  margin-top: 0;
 }
 
 .seat-grid {
@@ -87,22 +99,19 @@
 }
 
 /* Passenger number display */
-.passenger-number {
-  position: absolute;
-  top: 5px;
-  right: 5px;
+.passenger .passenger-number {
+  min-width: 30px;
+  height: 30px;
   background-color: #1890ff;
   color: white;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
   font-size: 12px;
+  margin-right: 0.5rem;
 }
-
 .seat-label {
   font-size: 11px;
   margin-bottom: 4px;
@@ -135,13 +144,22 @@
   background-color: #f9f9f9;
 }
 
+.passenger-section h3 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
 .passenger {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
   align-items: center;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
 }
-
 .passenger input,
 .passenger select {
   padding: 8px;
@@ -170,6 +188,17 @@
   padding: 8px 16px;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+.add-btn {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 1rem;
 }
 
 .add-btn:hover {

@@ -75,7 +75,7 @@ CREATE TABLE Seats (
     seat_id SERIAL PRIMARY KEY,
     train_id INT NOT NULL REFERENCES Train(train_id) ON DELETE CASCADE,
     class class_enum NOT NULL,
-    bhogi VARCHAR(3) NOT NULL CHECK (bhogi IN ('B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8' )),
+    bhogi VARCHAR(3) NOT NULL CHECK (bhogi IN ('B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8' ,'WL' )),
     seat_number INT NOT NULL,
     UNIQUE(train_id, class, bhogi, seat_number)
 );
@@ -90,7 +90,6 @@ CREATE TABLE Booking (
     train_class TEXT NOT NULL,
     src_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
     dest_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
-    booking_status booking_status_enum NOT NULL,
     pnr_number TEXT NOT NULL,
     CHECK (src_stn <> dest_stn),
     total_fare DECIMAL(10,2) NOT NULL CHECK (total_fare >= 0)
@@ -102,6 +101,8 @@ CREATE TABLE Ticket (
     ticket_id SERIAL PRIMARY KEY,
     booking_id INT NOT NULL REFERENCES Booking(booking_id) ON DELETE CASCADE,
     seat_id INT NOT NULL REFERENCES Seats(seat_id) ON DELETE CASCADE,
+    booking_status booking_status_enum NOT NULL,
+    waitlist_number INT NOT NULL DEFAULT 0,
     passenger_name VARCHAR(100) NOT NULL,
     passenger_gender gender_enum NOT NULL,
     passenger_age INT NOT NULL CHECK (passenger_age BETWEEN 1 AND 120)

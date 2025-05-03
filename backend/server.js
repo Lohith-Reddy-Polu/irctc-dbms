@@ -441,21 +441,34 @@ app.post('/add-train', isAuthenticated, async (req, res) => {
 // Updated /book-ticket endpoint to handle multiple seats and passengers
 
 const sendBookingConfirmation = async (toEmail, bookingDetails) => {
-  const { pnr, trainName, travelDate, passengers, seats } = bookingDetails;
+  const { pnr, trainName, travelDate, passengers, seats, waitlistedPassengers , fare} = bookingDetails;
 
-  let seatInfo = seats.map((s, i) =>
-    `Passenger ${i + 1}: ${passengers[i].passenger_name}, Seat: ${s.bhogi}-${s.seat_number}`
-  ).join("\n");
+  // Create confirmed passengers section
+  let confirmedSection = '';
+  if (passengers.length > 0) {
+    confirmedSection = `\nConfirmed Passengers:\n${seats.map((s, i) =>
+      `Passenger ${i + 1}: ${passengers[i].passenger_name}, Seat: ${s.bhogi}-${s.seat_number}`
+    ).join("\n")}`;
+  }
+
+  // Create waitlisted passengers section
+  let waitlistedSection = '';
+  if (waitlistedPassengers && waitlistedPassengers.length > 0) {
+    waitlistedSection = `\n\nWaitlisted Passengers:\n${waitlistedPassengers.map((p, i) =>
+      `Passenger: ${p.passenger_name}, Waitlist Number: WL${p.waitlist_number}`
+    ).join("\n")}`;
+  }
 
   const mailOptions = {
     from: "mybookingsystem1@gmail.com",
     to: toEmail,
     subject: `Your Train Booking Confirmation - PNR ${pnr}`,
-    text: `Your booking was successful!\n\nTrain: ${trainName}\nDate: ${travelDate}\nPNR: ${pnr}\n\n${seatInfo}\n\nThank you for booking with us!`,
+    text: `Your booking was successful! \n\n Train:${trainName} \nDate: ${travelDate} \n PNR: ${pnr} \n Total Fare: ${fare} \n${confirmedSection} \n ${waitlistedSection}\n \nThank you for booking with us!`,
   };
 
   await transporter.sendMail(mailOptions);
 };
+
 
 app.post('/book-ticket', async (req, res) => {
   const client = await pool.connect();
@@ -466,7 +479,8 @@ app.post('/book-ticket', async (req, res) => {
       train_class,
       srcStn,
       destStn,
-      seats
+      seats,
+      waitlisted_passengers 
     } = req.body;
 
     const booking_date = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
@@ -484,19 +498,57 @@ app.post('/book-ticket', async (req, res) => {
     const dest_stn_id_q = await pool.query(`Select station_id from stations where station_name = $1`, [destStn]);
     const src_stn_id = src_stn_id_q.rows[0].station_id;
     const dest_stn_id = dest_stn_id_q.rows[0].station_id;
+
+    const dis1 = await pool.query(`select distance_from_start_km from Route where station_id = $1 and train_id = $2`,[src_stn_id,train_id]);
+    const dis2 = await pool.query(`select distance_from_start_km from Route where station_id = $1 and train_id = $2`,[dest_stn_id,train_id]);
+    let dis_1 = dis1.rows[0].distance_from_start_km;
+    let dis_2 = dis2.rows[0].distance_from_start_km;
     // Validate input
-    if (!train_id || !travel_date || !train_class || !src_stn_id || !dest_stn_id || !seats || !seats.length) {
+    if (!train_id || !travel_date || !train_class || !src_stn_id || !dest_stn_id || !(seats || waitlisted_passengers )) {
       return res.status(400).json({ error: 'Missing required booking fields' });
     }
 
+    let fare = 0;
+
     // Validate each seat entry
-    for (const seat of seats) {
-      if (!seat.seat_id || !seat.passenger_name || !seat.passenger_gender || !seat.passenger_age) {
-        return res.status(400).json({ error: 'Missing passenger or seat details' });
+    if(seats){
+      for (const seat of seats) {
+        if (!seat.seat_id || !seat.passenger_name || !seat.passenger_gender || !seat.passenger_age) {
+          return res.status(400).json({ error: 'Missing passenger or seat details' });
+        }
+        const class1 = await pool.query(`select class from seats where train_id=$1 and seat_id=$2`,[train_id,seat.seat_id]);
+        let class2 = class1.rows[0].class;
+        if(class2 == '3AC') {fare += 3*(dis_2 - dis_1);}
+        if(class2 == '2AC') fare += 4*(dis_2 - dis_1);
+        if(class2 == '1AC') fare += 5*(dis_2 - dis_1);
+        if(class2 == 'SLP') fare += 2*(dis_2 - dis_1);
+      }
+    }
+
+    
+
+    if (waitlisted_passengers && waitlisted_passengers.length > 0) {
+      for (const passenger of waitlisted_passengers) {
+        if (!passenger.passenger_name || !passenger.passenger_gender || 
+            !passenger.passenger_age || !passenger.waitlist_number) {
+          return res.status(400).json({ error: 'Missing waitlisted passenger details' });
+        }
       }
     }
 
     await client.query('BEGIN');
+
+    const waitlistSeatResult = await client.query(
+      `SELECT seat_id FROM Seats 
+       WHERE train_id = $1 AND class = $2 AND bhogi = 'WL' AND seat_number = 0`,
+      [train_id, train_class]
+    );
+
+    if (!waitlistSeatResult.rows.length) {
+      throw new Error('Waitlist seat not found for this class');
+    }
+
+    const waitlist_seat_id = waitlistSeatResult.rows[0].seat_id;
 
     // Generate a PNR - using UUID for more uniqueness
     // const pnr = 'PNR' + Date.now() + Math.floor(Math.random() * 1000);
@@ -505,53 +557,95 @@ app.post('/book-ticket', async (req, res) => {
     const bookingResult = await client.query(
       `INSERT INTO Booking (
         user_id, train_id, travel_date , booking_date , train_class,
-        src_stn, dest_stn,booking_status, pnr_number, total_fare
+        src_stn, dest_stn, pnr_number, total_fare
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING booking_id`,
       [
         user_id, train_id, travel_date , booking_date , train_class,
-        src_stn_id, dest_stn_id, booking_status, pnr_number, 0
+        src_stn_id, dest_stn_id, pnr_number, fare
       ]
     );
 
     const booking_id = bookingResult.rows[0].booking_id;
 
     // Insert a ticket for each passenger/seat
-    for (const seat of seats) {
-      await client.query(
-        `INSERT INTO Ticket (
-          booking_id, seat_id,
-          passenger_name, passenger_gender, passenger_age
-        )
-        VALUES ($1,$2,$3,$4,$5)`,
-        [
-          booking_id, seat.seat_id,
-          seat.passenger_name, seat.passenger_gender, seat.passenger_age
-        ]
-      );
+    if(seats && seats.length > 0){
+      for (const seat of seats) {
+        await client.query(
+          `INSERT INTO Ticket (
+            booking_id, seat_id , booking_status,
+            passenger_name, passenger_gender, passenger_age , waitlist_number
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            booking_id, seat.seat_id, 'Confirmed',
+            seat.passenger_name, seat.passenger_gender, seat.passenger_age , 0
+          ]
+        );
+      }
     }
 
-
-    const tra = await client.query(`select train_name from train where train_id = $1`,[train_id]);
+    if (waitlisted_passengers && waitlisted_passengers.length > 0) {
+      for (const passenger of waitlisted_passengers) {
+        await client.query(
+          `INSERT INTO Ticket (
+            booking_id, seat_id, booking_status,
+            passenger_name, passenger_gender, passenger_age,
+            waitlist_number
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            booking_id, 
+            waitlist_seat_id, // Using dummy seat_id for waitlisted tickets
+            'Waiting',
+            passenger.passenger_name, 
+            passenger.passenger_gender, 
+            passenger.passenger_age,
+            passenger.waitlist_number
+          ]
+        );
+      }
+    }
+    // Get train name
+    const tra = await client.query(`select train_name from train where train_id = $1`, [train_id]);
     const train_name = tra.rows[0].train_name;
-    const seatIds = seats.map(seat => seat.seat_id);
-    console.log(seatIds);
-    const dbseats_db = await client.query(
-      `SELECT * FROM Seats WHERE seat_id = ANY($1::int[])`,
-      [seatIds]
-    );
-    const dbseats = dbseats_db.rows;
-    const use = await client.query(`Select * from users where user_id = $1`,[user_id])
+
+    // Get seat details for confirmed tickets (if any)
+    let dbseats = [];
+    if (seats && seats.length > 0) {
+      const seatIds = seats.map(seat => seat.seat_id);
+      const dbseats_db = await client.query(
+        `SELECT * FROM Seats WHERE seat_id = ANY($1::int[]) AND bhogi != 'WL'`,
+        [seatIds]
+      );
+      dbseats = dbseats_db.rows;
+    }
+
+    // Get user email
+    const use = await client.query(`Select * from users where user_id = $1`, [user_id]);
     const usermail = use.rows[0].email;
-    await sendBookingConfirmation(usermail,{pnr : pnr_number,trainName:train_name, travelDate:travel_date,passengers:seats,seats: dbseats});
+
+    // Send confirmation email with both confirmed and waitlisted passengers
+    await sendBookingConfirmation(usermail, {
+      pnr: pnr_number,
+      trainName: train_name,
+      travelDate: travel_date,
+      passengers: seats || [],
+      waitlistedPassengers: waitlisted_passengers || [],
+      seats: dbseats,
+      fare : fare
+    });
+
 
     await client.query('COMMIT');
     res.status(200).json({
-      message: 'Tickets booked successfully!',
+      message: 'Booking completed successfully!',
       booking_id,
       pnr_number: pnr_number,
-      num_tickets: seats.length
+      confirmed_tickets: seats ? seats.length : 0,
+      waitlisted_tickets: waitlisted_passengers ? waitlisted_passengers.length : 0,
+      total_tickets: (seats ? seats.length : 0) + (waitlisted_passengers ? waitlisted_passengers.length : 0)
     });
 
   } catch (err) {
@@ -645,7 +739,7 @@ app.get('/available-seats', async (req, res) => {
     const allSeatsQuery = `
       SELECT seat_id, bhogi, seat_number 
       FROM Seats
-      WHERE train_id = $1 AND class = $2
+      WHERE train_id = $1 AND class = $2 AND bhogi != 'WL'
       ORDER BY bhogi, seat_number
     `;
     
@@ -733,8 +827,23 @@ app.get('/available-seats', async (req, res) => {
     const sampleAvailable = result.filter(s => s.available).slice(0, 10);
     const sampleUnavailable = result.filter(s => !s.available).slice(0, 10);
     
+
+      // Get the current waitlist number
+    const waitlistQuery = `
+    SELECT COUNT(*) as waitlist_count
+    FROM Ticket T
+    JOIN Booking B ON T.booking_id = B.booking_id
+    WHERE B.train_id = $1 
+    AND B.train_class = $2 
+    AND B.travel_date = $3
+    AND T.booking_status = 'Waiting'
+    `;
+
+    const waitlistResult = await pool.query(waitlistQuery, [trainId, train_class, travel_date]);
+    const nextWaitlistNumber = parseInt(waitlistResult.rows[0].waitlist_count) + 1;
+
     
-    res.json({ seats: result });
+    res.status(200).json({ seats: result , next_waitlist_number: nextWaitlistNumber  });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch seat availability: ' + err.message });
   }
@@ -773,7 +882,7 @@ app.post('/train-status', async (req, res) => {
 });
 
 
-app.get("/my-tickets", isAuthenticated,async (req, res) => {
+app.get("/my-tickets", isAuthenticated, async (req, res) => {
   const user_id = req.session.userId;
   if (!user_id) return res.status(401).json({ error: "Not logged in" });
 
@@ -781,14 +890,15 @@ app.get("/my-tickets", isAuthenticated,async (req, res) => {
     const result = await pool.query(
       `SELECT 
          B.booking_id, B.pnr_number, B.travel_date, B.booking_date, 
-         B.booking_status, B.total_fare,
+         B.total_fare,
          T.train_id, T.train_name, T.train_no,
          Tk.ticket_id, Tk.passenger_name, Tk.passenger_gender, Tk.passenger_age, 
+         Tk.booking_status, Tk.waitlist_number,
          S.seat_id, S.class, S.bhogi, S.seat_number
        FROM Booking B
        JOIN Train T ON B.train_id = T.train_id
        JOIN Ticket Tk ON B.booking_id = Tk.booking_id
-       JOIN Seats S ON Tk.seat_id = S.seat_id
+       LEFT JOIN Seats S ON Tk.seat_id = S.seat_id
        WHERE B.user_id = $1
        ORDER BY B.booking_date DESC`,
       [user_id]
@@ -803,7 +913,6 @@ app.get("/my-tickets", isAuthenticated,async (req, res) => {
           pnr_number: row.pnr_number,
           travel_date: row.travel_date,
           booking_date: row.booking_date,
-          booking_status: row.booking_status,
           total_fare: row.total_fare,
           train_name: row.train_name,
           train_no: row.train_no,
@@ -815,9 +924,11 @@ app.get("/my-tickets", isAuthenticated,async (req, res) => {
         name: row.passenger_name,
         gender: row.passenger_gender,
         age: row.passenger_age,
-        class: row.class,
-        bhogi: row.bhogi,
-        seat_number: row.seat_number
+        booking_status: row.booking_status,
+        waitlist_number: row.waitlist_number,
+        class: row.class || "N/A",
+        bhogi: row.bhogi || "N/A",
+        seat_number: row.seat_number || "N/A"
       });
     });
 

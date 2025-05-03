@@ -91,3 +91,10 @@ INSERT INTO food_item (name, price) VALUES
 ('Veg Biryani', 120.00),
 ('Paneer Thali', 150.00),
 ('Chicken Curry', 180.00);
+
+-- Add dummy seats for waitlisted tickets (one for each class)
+INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
+(1, 'SLP', 'WL', 0),
+(1, '1AC', 'WL', 0),
+(1, '2AC', 'WL', 0),
+(1, '3AC', 'WL', 0);
