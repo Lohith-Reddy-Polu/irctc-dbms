@@ -1156,4 +1156,43 @@ app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
 
+///////////////////////////PNR ENQIRY//////////////////////////////
+
+app.post('/pnr-enquiry', async (req, res) => {
+  const { pnrNumber } = req.body;
+
+  if (!pnrNumber || pnrNumber.length < 6) {
+    return res.status(400).json({ error: 'Invalid PNR format' });
+  }
+
+  try {
+    const query = `
+              SELECT 
+                tr.train_name,
+                tr.train_no,
+                t.passenger_name,
+                t.passenger_gender,
+                t.passenger_age,
+                s.bhogi,
+                s.seat_number,
+                t.booking_status,
+                t.waitlist_number
+              FROM Booking b
+              JOIN Ticket t ON b.booking_id = t.booking_id
+              JOIN Seats s ON t.seat_id = s.seat_id
+              JOIN Train tr ON b.train_id = tr.train_id
+              WHERE b.pnr_number = $1`;
+    const result = await pool.query(query, [pnrNumber]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'PNR not found or no tickets available' });
+    }
+
+    res.json({ booking: result.rows[0], tickets: result.rows });
+  } catch (err) {
+    console.error('Error validating PNR:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = app;

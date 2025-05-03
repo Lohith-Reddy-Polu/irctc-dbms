@@ -1,0 +1,50 @@
+.pnr-enquiry-container {
+    padding: 20px;
+    max-width: 700px;
+    margin: auto;
+    font-family: Arial, sans-serif;
+  }
+  
+  input {
+    padding: 8px;
+    font-size: 16px;
+    width: 200px;
+    margin-right: 10px;
+  }
+  
+  button {
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .error {
+    color: red;
+    margin-top: 10px;
+  }
+  
+  .pnr-results {
+    margin-top: 30px;
+  }
+  
+  .pnr-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  
+  .pnr-table th,
+  .pnr-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .pnr-table th {
+    background-color: #f0f0f0;
+  }
+  
+  .pnr-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
