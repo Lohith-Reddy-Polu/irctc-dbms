@@ -17,10 +17,10 @@ const port = 4000;
 
 // PostgreSQL connection
 const pool = new Pool({
-  user: 'postgres',
+  user: 'project',
   host: 'localhost',
   database: 'irctc',
-  password: 'Mukhi@0412',
+  password: 'project',
   port: 5432,
 });
 
@@ -759,11 +759,15 @@ app.post('/train-status', async (req, res) => {
       WHERE t.train_no = $1
       ORDER BY r.stop_number
     `, [trainNumber]);
-
+  if(result.rows.length===0){
+      res.status(400).json({error: "Invalid Train number"});
+  }
+  else{
+  res.status(200).json({ stations: result.rows });}
+} catch (error) {
+  console.error("Error fetching train status:", error);
+  res.status(500).json({ error: "Internal server error" });
     res.status(200).json({ stations: result.rows });
-  } catch (error) {
-    console.error("Error fetching train status:", error);
-    res.status(500).json({ message: "Internal server error" });
   }
 });
 

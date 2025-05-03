@@ -38,15 +38,31 @@ const LiveTrainTracker = () => {
     let latestDelay = 0;
 
     return stations.map((station) => {
-      let estimatedArrival, estimatedDeparture;
+      let estimatedArrival = null, estimatedDeparture = null;
 
-      if (station.status === "reached") {
-        estimatedArrival = addMinutes(station.arrival_time, station.arrival_delay_minutes || 0);
-        estimatedDeparture = addMinutes(station.departure_time, station.departure_delay_minutes || 0);
+      if (station.status === "Departed") {
+        if(station.arrival_time){
+        estimatedArrival = addMinutes(station.arrival_time, station.arrival_delay_minutes || 0);}
+        if(station.departure_time){
+        estimatedDeparture = addMinutes(station.departure_time, station.departure_delay_minutes || 0);}
         latestDelay = station.departure_delay_minutes || station.arrival_delay_minutes || 0;
-      } else {
-        estimatedArrival = addMinutes(station.arrival_time, latestDelay);
-        estimatedDeparture = addMinutes(station.departure_time, latestDelay);
+      }
+      else if(station.status === "Arrived"){
+        if(station.arrival_time){
+        estimatedArrival = addMinutes(station.arrival_time, station.arrival_delay_minutes || 0);}
+        if(station.departure_time){
+        estimatedDeparture = addMinutes(station.departure_time,  Math.max(station.arrival_delay_minutes,0) || 0);}
+        latestDelay = Math.max(station.arrival_delay_minutes,0) || 0;
+      }
+      else if(station.status === "Estimated"){
+        if(station.arrival_time){
+        estimatedArrival = addMinutes(station.arrival_time, latestDelay);}
+        if(station.departure_time){
+        estimatedDeparture = addMinutes(station.departure_time, latestDelay);}
+      }
+      else{
+          estimatedDeparture = null; 
+          estimatedArrival = null;
       }
 
       return {
@@ -76,7 +92,7 @@ const LiveTrainTracker = () => {
         const transformed = transformData(data.stations);
         setStatusData(transformed);
       } else {
-        setError(data.message || "Train not found or server error.");
+        setError(data.error || "Train not found or server error.");
       }
     } catch (err) {
       console.error("Error fetching train status:", err);
@@ -121,8 +137,8 @@ const LiveTrainTracker = () => {
                 <tr key={idx}>
                   <td>{station.stop_number}</td>
                   <td>{station.name}</td>
-                  <td>{station.estimated_arrival}</td>
-                  <td>{station.estimated_departure}</td>
+                  <td>{station.estimated_arrival ?? "-"}</td>
+                  <td>{station.estimated_departure ?? "-"}</td>
                   <td>{station.status}</td>
                 </tr>
               ))}
