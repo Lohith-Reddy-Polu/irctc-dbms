@@ -64,7 +64,7 @@ const UserSignup = () => {
        if (response.status === 200){
         navigate("/user-dashboard");
        } else{
-        setError(data.message || "Signup failed");
+        setError(data.error || "Signup failed");
        }
     }
     catch(error1){

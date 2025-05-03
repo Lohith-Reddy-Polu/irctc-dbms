@@ -20,7 +20,7 @@ const AdminDashboard = () => {
           navigate('/');
         }
         else{
-            setAdmin(data.adminId);
+            setAdmin(data.adminname);
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
@@ -45,7 +45,7 @@ const AdminDashboard = () => {
       <Navbar isAdmin={true} />
       <div className="admin-dashboard-container">
         <h2>Admin Dashboard</h2>
-        <p><strong>Welcome, Admin {admin}</strong></p>
+        <p><strong>Welcome, {admin}</strong></p>
         <p>Manage trains, view bookings, and more.</p>
       </div>
     </div>

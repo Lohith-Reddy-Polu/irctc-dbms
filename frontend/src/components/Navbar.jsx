@@ -60,6 +60,15 @@ const Navbar = ({ isAdmin }) => {
         <li>
           <button onClick={handleLogout}>Logout</button> {/* ✅ Fix here */}
         </li>
+        <li>
+          <button onClick={() => navigate("/live-status")}>Live Status</button>
+        </li>
+        <li>
+          <button onClick={() => navigate("/delete-account")}>Delete Account</button>
+        </li>
+        <li>
+          <button onClick={() => navigate("/profile")}>Profile</button>
+        </li>
       </ul>
     </nav>
   );

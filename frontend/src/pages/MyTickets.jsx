@@ -67,8 +67,8 @@ const MyTickets = () => {
         <h2 className="ticket-header">PNR: {b.pnr_number}</h2>
         <div className="ticket-info">
           <p><span className="label">Train:</span> {b.train_name} ({b.train_no})</p>
-          <p><span className="label">Travel Date:</span> {b.travel_date}</p>
-          <p><span className="label">Booking Date:</span> {b.booking_date}</p>
+          <p><span className="label">Travel Date:</span> {new Date(b.travel_date).toLocaleDateString('en-IN')}</p>
+          <p><span className="label">Booking Date:</span> {new Date(b.booking_date).toLocaleDateString('en-IN')}</p>
           <p><span className="label">Status:</span> {b.booking_status}</p>
           <p><span className="label">Total Fare:</span> ₹{b.total_fare}</p>
         </div>

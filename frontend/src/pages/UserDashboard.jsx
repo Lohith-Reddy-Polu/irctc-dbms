@@ -19,11 +19,12 @@ const UserDashboard = () => {
           },
         });
         const data = await response.json();
+        console.log(data);
         if (response.status !== 200) {
           navigate('/');
         }
         else{
-            setUser(data.userId);
+            setUser(data.username);
         }
       } catch (error) {
         console.error('Error checking user status:', error);
@@ -39,7 +40,7 @@ const UserDashboard = () => {
     <div className="dashboard-container">
       <Navbar isAdmin={false} />
       <h2>User Dashboard</h2>
-      <p>Welcome, User {user}</p>
+      <p>Welcome, {user}</p>
       <p>Look trains, view bookings, and more.</p>
     </div>
   );

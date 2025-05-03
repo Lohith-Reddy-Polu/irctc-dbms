@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const nodemailer = require("nodemailer");
 // const pgSession = require('connect-pg-simple')(session);
 const app = express();
 const port = 4000;
@@ -53,13 +54,19 @@ const handleDbError = (res, error) => {
   res.status(500).json({ error: error.message });
 };
 
-
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "mybookingsystem1@gmail.com", // your email
+    pass: "wrtr hpky rvqg frpk", // app password or SMTP pass
+  },
+})
 
 function isAuthenticated(req, res, next) {
   if(req.session.userId || req.session.adminId){
     return next();
   }
-  return res.status(400).json( {message: "Unauthorized" });
+  return res.status(400).json( {error: "Unauthorized" });
   // return res.redirect('/');
 }
 
@@ -76,7 +83,7 @@ function isLoggedIn(req, res, next) {
 // Routes
 app.get('/isUserLoggedIn', (req, res) => {
   if (req.session.userId) {
-    res.status(200).json({ loggedIn: true, userId: req.session.userId });
+    res.status(200).json({ loggedIn: true, userId: req.session.userId , username:req.session.username});
   } else {
     res.status(401).json({ loggedIn: false });
   }
@@ -84,7 +91,7 @@ app.get('/isUserLoggedIn', (req, res) => {
 
 app.get('/isAdminLoggedIn', (req, res) => {
   if (req.session.adminId) {
-    res.status(200).json({ loggedIn: true, adminId: req.session.adminId });
+    res.status(200).json({ loggedIn: true, adminId: req.session.adminId, adminname:req.session.adminname });
   } else {
     res.status(401).json({ loggedIn: false });
   }
@@ -123,6 +130,7 @@ app.post('/user-signup',isLoggedIn, async (req, res) => {
       [email]
     );
     req.session.userId = result.rows[0].user_id;
+    req.session.username = result.rows[0].name;
     res.status(200).json({ message: 'User registered successfully!', user: result.rows[0] });
   } catch (error) {
     handleDbError(res, error);
@@ -146,9 +154,53 @@ app.post('/user-login',isLoggedIn, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     req.session.userId = user.user_id;
+    req.session.username = user.name;
     res.status(200).json({ message: 'Login successful', user: { id: user.user_id, name: user.name, email: user.email } });
   } catch (error) {
     handleDbError(res, error);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const result = await pool.query(
+      "SELECT name, email, phone_no FROM Users WHERE user_id = $1",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/delete-account", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Not logged in" });
+    }
+    const { rows } = await pool.query("SELECT * FROM Users WHERE user_id = $1", [userId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    // Delete user (ON DELETE CASCADE will clean up bookings, tickets, etc.)
+    await pool.query("DELETE FROM Users WHERE user_id = $1", [userId]);
+
+    req.session.destroy(); // Clear session
+    res.clearCookie("connect.sid");
+    res.status(200).json({ message: "Account deleted successfully." });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -169,6 +221,7 @@ app.post('/admin-login',isLoggedIn, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     req.session.adminId = admin.admin_id;
+    req.session.adminname = admin.name;
     console.log('%d : %d',req.session.adminId,admin.admin_id);
     res.status(200).json({ message: 'Admin login successful', admin: { id: admin.admin_id, name: admin.name, email: admin.email } });
   } catch (error) {
@@ -386,6 +439,24 @@ app.post('/add-train', isAuthenticated, async (req, res) => {
 // });
 
 // Updated /book-ticket endpoint to handle multiple seats and passengers
+
+const sendBookingConfirmation = async (toEmail, bookingDetails) => {
+  const { pnr, trainName, travelDate, passengers, seats } = bookingDetails;
+
+  let seatInfo = seats.map((s, i) =>
+    `Passenger ${i + 1}: ${passengers[i].passenger_name}, Seat: ${s.bhogi}-${s.seat_number}`
+  ).join("\n");
+
+  const mailOptions = {
+    from: "mybookingsystem1@gmail.com",
+    to: toEmail,
+    subject: `Your Train Booking Confirmation - PNR ${pnr}`,
+    text: `Your booking was successful!\n\nTrain: ${trainName}\nDate: ${travelDate}\nPNR: ${pnr}\n\n${seatInfo}\n\nThank you for booking with us!`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
 app.post('/book-ticket', async (req, res) => {
   const client = await pool.connect();
   try {
@@ -398,9 +469,10 @@ app.post('/book-ticket', async (req, res) => {
       seats
     } = req.body;
 
-    const booking_date = new Date().toISOString().split('T')[0];
+    const booking_date = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
+
     const booking_status = 'Confirmed';
-    const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
+    const pnr_number =  Date.now() + Math.floor(Math.random() * 1000);
 
     // Get user_id from session
     const user_id = req.session.userId;
@@ -459,8 +531,21 @@ app.post('/book-ticket', async (req, res) => {
       );
     }
 
-    await client.query('COMMIT');
 
+    const tra = await client.query(`select train_name from train where train_id = $1`,[train_id]);
+    const train_name = tra.rows[0].train_name;
+    const seatIds = seats.map(seat => seat.seat_id);
+    console.log(seatIds);
+    const dbseats_db = await client.query(
+      `SELECT * FROM Seats WHERE seat_id = ANY($1::int[])`,
+      [seatIds]
+    );
+    const dbseats = dbseats_db.rows;
+    const use = await client.query(`Select * from users where user_id = $1`,[user_id])
+    const usermail = use.rows[0].email;
+    await sendBookingConfirmation(usermail,{pnr : pnr_number,trainName:train_name, travelDate:travel_date,passengers:seats,seats: dbseats});
+
+    await client.query('COMMIT');
     res.status(200).json({
       message: 'Tickets booked successfully!',
       booking_id,
@@ -653,6 +738,35 @@ app.get('/available-seats', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch seat availability: ' + err.message });
   }
 });
+
+
+app.post('/train-status', async (req, res) => {
+  const { trainNumber } = req.body;
+
+  try {
+    const result = await pool.query(`
+      SELECT
+        s.station_name AS name,
+        r.stop_number,
+        r.arrival_time ,
+        r.departure_time ,
+        r.arrival_delay_minutes,
+        r.departure_delay_minutes,
+        r.status
+      FROM route r
+      JOIN stations s ON r.station_id = s.station_id
+      JOIN train t ON t.train_id = r.train_id
+      WHERE t.train_no = $1
+      ORDER BY r.stop_number
+    `, [trainNumber]);
+
+    res.status(200).json({ stations: result.rows });
+  } catch (error) {
+    console.error("Error fetching train status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 app.get("/my-tickets", isAuthenticated,async (req, res) => {
   const user_id = req.session.userId;

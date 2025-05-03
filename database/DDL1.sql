@@ -3,6 +3,7 @@ CREATE TYPE day_enum AS ENUM ('Sunday', 'Monday', 'Tuesday' , 'Wednesday' , 'Thu
 CREATE TYPE class_enum AS ENUM ('3AC', '2AC' , 'SLP' , '1AC');
 CREATE TYPE gender_enum AS ENUM ('Male', 'Female', 'Other');
 CREATE TYPE booking_status_enum AS ENUM ('Confirmed', 'Waiting', 'Cancelled');
+CREATE TYPE tracking_status_enum AS ENUM ('Estimated', 'Arrived', 'Departed', 'Skipped');
 
 -- DROP ALL TABLES (in reverse dependency order)
 DROP TABLE IF EXISTS Ticket CASCADE;
@@ -59,6 +60,9 @@ CREATE TABLE Route (
     arrival_time TIME,
     departure_time TIME,
     distance_from_start_km INT NOT NULL,
+    arrival_delay_minutes INT DEFAULT 0,
+    departure_delay_minutes INT DEFAULT 0,
+    status tracking_status_enum DEFAULT 'Estimated',
     UNIQUE(train_id, stop_number),
     UNIQUE(train_id, station_id)
 );
@@ -76,13 +80,13 @@ CREATE TABLE Seats (
 -- BOOKING
 CREATE TABLE Booking (
     booking_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(user_id),
-    train_id INTEGER REFERENCES train(train_id),
+    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+    train_id INTEGER REFERENCES train(train_id) ON DELETE CASCADE,
     travel_date DATE NOT NULL,
     booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
     train_class TEXT NOT NULL,
-    src_stn INT NOT NULL REFERENCES Stations(station_id),
-    dest_stn INT NOT NULL REFERENCES Stations(station_id),
+    src_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
+    dest_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
     booking_status booking_status_enum NOT NULL,
     pnr_number TEXT NOT NULL,
     CHECK (src_stn <> dest_stn),

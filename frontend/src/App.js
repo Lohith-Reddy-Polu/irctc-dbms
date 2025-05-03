@@ -13,6 +13,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AddTrainPage from './pages/AddTrainPage';
 import TrainsPage from './pages/TrainsPage';
 import NotFound from './pages/NotFound';
+import LiveTrainTracker from './pages/LiveTrainTracker';
+import DeleteAccount from './pages/DeleteAccount';
+import Profile from './pages/Profile';
 import './styles.css';
 
 const App = () => {
@@ -33,6 +36,9 @@ const App = () => {
         <Route path="*" element={<NotFound />} />
         <Route path="/book" element={<Booking />} />       
         <Route path="/my-tickets" element={<MyTickets />} />    
+        <Route path="/live-status" element={<LiveTrainTracker />} />    
+        <Route path="/delete-account" element={<DeleteAccount />} />    
+        <Route path="/profile" element={<Profile />} />  
       </Routes>
     </div>
   );

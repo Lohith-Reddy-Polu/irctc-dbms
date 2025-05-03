@@ -56,7 +56,7 @@ const UserLogin = () => {
       if (response.status === 200) {
         navigate("/user-dashboard");
       } else {
-        setError(data.message || "Login failed");
+        setError(data.error || "Login failed");
       }
     } catch (error1) {
       console.error("Login error: ", error1);
