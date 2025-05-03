@@ -69,6 +69,9 @@ const Navbar = ({ isAdmin }) => {
         <li>
           <button onClick={() => navigate("/profile")}>Profile</button>
         </li>
+        <li>
+          <button onClick={() => navigate("/order-food")}>Order Food</button>
+        </li>
       </ul>
     </nav>
   );
