@@ -1,4 +1,9 @@
 -- ENUM TYPES (unchanged)
+DROP TYPE IF EXISTS day_enum CASCADE;
+DROP TYPE IF EXISTS class_enum CASCADE;
+DROP TYPE IF EXISTS gender_enum CASCADE;
+DROP TYPE IF EXISTS booking_status_enum CASCADE;
+DROP TYPE IF EXISTS tracking_status_enum CASCADE;
 CREATE TYPE day_enum AS ENUM ('Sunday', 'Monday', 'Tuesday' , 'Wednesday' , 'Thursday' , 'Friday' , 'Saturday');
 CREATE TYPE class_enum AS ENUM ('3AC', '2AC' , 'SLP' , '1AC');
 CREATE TYPE gender_enum AS ENUM ('Male', 'Female', 'Other');
@@ -6,17 +11,18 @@ CREATE TYPE booking_status_enum AS ENUM ('Confirmed', 'Waiting', 'Cancelled');
 CREATE TYPE tracking_status_enum AS ENUM ('Estimated', 'Arrived', 'Departed', 'Skipped');
 
 -- DROP ALL TABLES (in reverse dependency order)
+DROP TABLE IF EXISTS Delays CASCADE;
+DROP TABLE IF EXISTS Route CASCADE;
 DROP TABLE IF EXISTS Users CASCADE;
 DROP TABLE IF EXISTS Admin CASCADE;
-DROP TABLE IF EXISTS Stations CASCADE;
-DROP TABLE IF EXISTS Train CASCADE;
-DROP TABLE IF EXISTS Route CASCADE;
 DROP TABLE IF EXISTS Seats CASCADE;
+DROP TABLE IF EXISTS Train CASCADE;
+DROP TABLE IF EXISTS Stations CASCADE;
 DROP TABLE IF EXISTS Booking CASCADE;
 DROP TABLE IF EXISTS Ticket CASCADE;
-DROP TABLE IF EXISTS food_item;
-DROP TABLE IF EXISTS Booking_food;
-DROP TABLE IF EXISTS order_details;
+DROP TABLE IF EXISTS Food_item CASCADE;
+DROP TABLE IF EXISTS Order_details CASCADE;
+
 
 -- USERS
 CREATE TABLE Users (
@@ -47,8 +53,8 @@ CREATE TABLE Train (
     train_id SERIAL PRIMARY KEY,
     train_no VARCHAR(10) UNIQUE NOT NULL,
     train_name VARCHAR(100) NOT NULL,
-    src_stn VARCHAR(50) NOT NULL,
-    dest_stn VARCHAR(50) NOT NULL,
+    src_stn VARCHAR(100) NOT NULL REFERENCES Stations(station_code) ON DELETE CASCADE,
+    dest_stn VARCHAR(100) NOT NULL REFERENCES Stations(station_code) ON DELETE CASCADE,
     arrival_time TIME NOT NULL,
     departure_time TIME NOT NULL,
     operating_days day_enum[] NOT NULL
@@ -63,11 +69,18 @@ CREATE TABLE Route (
     arrival_time TIME,
     departure_time TIME,
     distance_from_start_km INT NOT NULL,
+    UNIQUE(train_id, stop_number),
+    UNIQUE(train_id, station_id)
+);
+
+CREATE TABLE Delays (
+    delay_id SERIAL PRIMARY KEY,
+    route_id INT NOT NULL REFERENCES Route(route_id) ON DELETE CASCADE,
+    departure_date DATE NOT NULL DEFAULT CURRENT_DATE,
     arrival_delay_minutes INT DEFAULT 0,
     departure_delay_minutes INT DEFAULT 0,
     status tracking_status_enum DEFAULT 'Estimated',
-    UNIQUE(train_id, stop_number),
-    UNIQUE(train_id, station_id)
+    UNIQUE(departure_date,route_id)
 );
 
 -- SEATS: simplified (no availability)
@@ -87,7 +100,7 @@ CREATE TABLE Booking (
     train_id INTEGER REFERENCES train(train_id) ON DELETE CASCADE,
     travel_date DATE NOT NULL,
     booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    train_class TEXT NOT NULL,
+    train_class  class_enum NOT NULL,
     src_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
     dest_stn INT NOT NULL REFERENCES Stations(station_id)ON DELETE CASCADE,
     booking_status booking_status_enum NOT NULL,
@@ -108,26 +121,15 @@ CREATE TABLE Ticket (
 );
 
 
-CREATE TABLE food_item (
+CREATE TABLE Food_item (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   price DECIMAL(10, 2)
 );
 
-CREATE TABLE Booking_food (
-  booking_id SERIAL PRIMARY KEY,
-  user_id INT,
-  pnr_number VARCHAR(10),
-  train_id INT,
-  travel_date DATE,
-  booking_status VARCHAR(50),
-  src_stn VARCHAR(50),
-  dest_stn VARCHAR(50)
-);
-
-CREATE TABLE order_details (
+CREATE TABLE Order_details (
   order_id SERIAL PRIMARY KEY,
-  booking_id INT REFERENCES Booking(booking_id),
-  food_item_id INT REFERENCES food_item(id),
+  booking_id INT REFERENCES Booking(booking_id) ON DELETE CASCADE,
+  food_item_id INT REFERENCES food_item(id) ON DELETE CASCADE,
   quantity INT
 );

@@ -6,6 +6,7 @@ import '../css/LiveTrainTracker.css';
 
 const LiveTrainTracker = () => {
   const [trainNumber, setTrainNumber] = useState("");
+  const [date, setDate] = useState("");
   const [statusData, setStatusData] = useState([]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -83,7 +84,7 @@ const LiveTrainTracker = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ trainNumber }),
+        body: JSON.stringify({ trainNumber , date }),
       });
 
       const data = await response.json();
@@ -112,6 +113,13 @@ const LiveTrainTracker = () => {
           id="trainNumber"
           value={trainNumber}
           onChange={(e) => setTrainNumber(e.target.value)}
+          required
+        />
+        <label htmlFor="Date">Date:</label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
           required
         />
         <button type="submit">Track Train</button>

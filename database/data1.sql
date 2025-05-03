@@ -10,6 +10,9 @@ INSERT INTO Stations (station_code, station_name) VALUES
 ('NGP', 'Nagpur Junction'),
 ('CSMT', 'Mumbai CSMT');
 
+INSERT INTO Admin (admin_id,name,password,email) VALUES
+(1,'lohith','lohith','22B0947@iitb.ac.in');
+
 INSERT INTO Train (train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days) VALUES
 ('12301', 'Rajdhani Express', 'NDLS', 'HWH', '17:00', '17:30', ARRAY['Monday', 'Wednesday', 'Friday']::day_enum[]),
 ('11061', 'LTT Jayanthi Exp', 'CSMT', 'HWH', '10:30', '11:00', ARRAY['Tuesday', 'Saturday']::day_enum[]),
@@ -91,3 +94,11 @@ INSERT INTO food_item (name, price) VALUES
 ('Veg Biryani', 120.00),
 ('Paneer Thali', 150.00),
 ('Chicken Curry', 180.00);
+
+INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_delay_minutes, status) VALUES 
+(1, '2025-05-02', 15, 0, 'Departed'),
+(2, '2025-05-02', 15, 11, 'Departed'),
+(3, '2025-05-02', 15, 3, 'Arrived'),
+(4, '2025-05-02', 15, 11, 'Estimated'),
+(5, '2025-05-02', 15, 0, 'Estimated'),
+(6, '2025-05-02', 15, 11, 'Estimated');

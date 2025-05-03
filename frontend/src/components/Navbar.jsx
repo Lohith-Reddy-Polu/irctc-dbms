@@ -52,6 +52,9 @@ const Navbar = ({ isAdmin }) => {
             <li>
               <button onClick={() => navigate("/add-train")}>Add Train</button>
             </li>
+            <li>
+              <button onClick={() => navigate("/add-delay")}>Add Delay</button>
+            </li>
           </>
         )}
         <li>

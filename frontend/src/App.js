@@ -17,6 +17,7 @@ import LiveTrainTracker from './pages/LiveTrainTracker';
 import DeleteAccount from './pages/DeleteAccount';
 import Profile from './pages/Profile';
 import Orderfood from './pages/Orderfood';
+import AddDelay from './pages/AddDelay';
 import './styles.css';
 
 const App = () => {
@@ -41,6 +42,7 @@ const App = () => {
         <Route path="/delete-account" element={<DeleteAccount />} />    
         <Route path="/profile" element={<Profile />} />  
         <Route path="/order-food" element={<Orderfood />} />  
+        <Route path="/add-delay" element={< AddDelay/>} /> 
       </Routes>
     </div>
   );
