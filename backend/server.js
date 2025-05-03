@@ -229,6 +229,82 @@ app.post('/admin-login',isLoggedIn, async (req, res) => {
   }
 });
 
+
+app.post('/add-delay', async (req, res) => {
+  const { train_no, station_code, departure_date, delay_minutes, type } = req.body;
+
+  try {
+    const trainRes = await pool.query(`SELECT train_id FROM Train WHERE train_no = $1`, [train_no]);
+    if (trainRes.rowCount === 0) return res.status(404).json({ message: 'Train not found' });
+
+    const stationRes = await pool.query(`SELECT station_id FROM Stations WHERE station_code = $1`, [station_code]);
+    if (stationRes.rowCount === 0) return res.status(404).json({ message: 'Station not found' });
+
+    const { train_id } = trainRes.rows[0];
+    const { station_id } = stationRes.rows[0];
+
+    const routeRes = await pool.query(
+      `SELECT route_id FROM Route WHERE train_id = $1 AND station_id = $2`,
+      [train_id, station_id]
+    );
+    if (routeRes.rowCount === 0) return res.status(404).json({ message: 'Route entry not found' });
+
+    const { route_id } = routeRes.rows[0];
+
+    const existing = await pool.query(
+      `SELECT * FROM Delays WHERE route_id = $1 AND departure_date = $2`,
+      [route_id, departure_date]
+    );
+
+    if (existing.rowCount > 0) {
+      if (type === 'arrival') {
+        await pool.query(
+          `UPDATE Delays SET arrival_delay_minutes = $1,status = 'Arrived' WHERE route_id = $2 AND departure_date = $3`,
+          [delay_minutes, route_id, departure_date]
+        );
+      } else {
+        await pool.query(
+          `UPDATE Delays SET departure_delay_minutes = $1,status = 'Departed' WHERE route_id = $2 AND departure_date = $3`,
+          [delay_minutes, route_id, departure_date]
+        );
+      }
+    } else {
+          const allRoutes = await pool.query('SELECT route_id FROM Route WHERE train_id = $1', [train_id]);
+          for (const r of allRoutes.rows) {
+            const r_id = r.route_id;
+            const arrival = (r_id === route_id && type === 'arrival') ? delay_minutes : 0;
+            const departure = (r_id === route_id && type === 'departure') ? delay_minutes : 0;
+            if(r_id === route_id &&type === 'arrival'){
+            await pool.query(
+              `INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_delay_minutes,status) VALUES ($1, $2, $3, $4,$5)`,
+              [r_id, departure_date, arrival, departure,"Arrived"] );
+            }
+            else if(r_id === route_id &&type === 'departure'){
+              await pool.query(
+              `INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_delay_minutes,status) VALUES ($1, $2, $3, $4,$5)`,
+              [r_id, departure_date, arrival, departure,"Departed"] );
+            }
+            else{
+              await pool.query(
+                `INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_delay_minutes) VALUES ($1, $2, $3, $4)`,
+                [r_id, departure_date, arrival, departure] );
+            }
+          }
+      // const arrival = type === 'arrival' ? delay_minutes : 0;
+      // const departure = type === 'departure' ? delay_minutes : 0;
+      // await pool.query(
+      //   'INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_delay_minutes) VALUES ($1, $2, $3, $4)',
+      //   [route_id, departure_date, arrival, departure]
+      // );
+    }
+
+    res.status(200).json({ message: 'Delay updated successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get List of Trains
 // app.get('/trains',isAuthenticated, async (req, res) => {
 //   console.log("User id : ",req.session.userId);
@@ -365,80 +441,6 @@ app.post('/add-train', isAuthenticated, async (req, res) => {
 });
 
 
-// app.post("/book-ticket",isAuthenticated, async (req, res) => {
-//   const { train_id, travel_date, train_class, passengers } = req.body;
-//   const user_id = req.session.userId;
-//   console.log("seats available: ",req.body);
-//   if (!user_id || !train_id || !travel_date || !train_class || !Array.isArray(passengers)) {
-//     return res.status(400).json({ error: "Missing required booking data" });
-//   }
-  
-//   // const client = await pool.connect();
-
-//   try {
-//     await pool.query("BEGIN");
-    
-//     // 1. Generate unique PNR
-    // const pnr_number = "PNR" + Date.now() + Math.floor(Math.random() * 1000);
-
-//     // 2. Insert into Booking
-//     const booking_date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-//     const bookingRes = await pool.query(
-//       `INSERT INTO Booking (user_id, train_id, pnr_number, travel_date, booking_date, booking_status, total_fare)
-//        VALUES ($1, $2, $3, $4, $5, 'Confirmed', 100)
-//        RETURNING booking_id`,
-//       [user_id, train_id, pnr_number, travel_date, booking_date]
-//     );
-    
-//     const booking_id = bookingRes.rows[0].booking_id;
-
-//     // 3. Fetch available seats for the train/class
-//     const seatRes = await pool.query(
-//       `SELECT seat_id FROM Seats 
-//        WHERE train_id = $1 AND class = $2 AND status = 'Available' 
-//        LIMIT $3 FOR UPDATE`,
-//       [train_id, train_class, passengers.length]
-//     );
-
-//     if (seatRes.rows.length < passengers.length) {
-//       await pool.query("ROLLBACK");
-//       return res.status(400).json({ error: "Not enough available seats" });
-//     }
-
-//     const seat_ids = seatRes.rows.map(row => row.seat_id);
-    
-//     // 4. Insert Tickets and mark seats as Booked
-//     for (let i = 0; i < passengers.length; i++) {
-//       const { name, gender, age } = passengers[i];
-//       const seat_id = seat_ids[i];
-
-//       await pool.query(
-//         `INSERT INTO Ticket (train_id, booking_id, seat_id, passenger_name, gender, age)
-//          VALUES ($1, $2, $3, $4, $5, $6)`,
-//         [train_id, booking_id, seat_id, name, gender, age]
-//       );
-
-//       await pool.query(
-//         `UPDATE Seats SET status = 'Booked' WHERE seat_id = $1`,
-//         [seat_id]
-//       );
-//     }
-
-//     await pool.query("COMMIT");
-
-//     return res.status(200).json({ message: "Booking successful", pnr_number });
-
-//   } catch (err) {
-//     await pool.query("ROLLBACK");
-//     console.error("Booking error:", err);
-//     return res.status(500).json({ error: "Internal server error" });
-//   } finally {
-//     // client.release();
-//   }
-// });
-
-// Updated /book-ticket endpoint to handle multiple seats and passengers
 
 const sendBookingConfirmation = async (toEmail, bookingDetails) => {
   const { pnr, trainName, travelDate, passengers, seats, waitlistedPassengers , fare} = bookingDetails;
@@ -851,33 +853,58 @@ app.get('/available-seats', async (req, res) => {
 
 
 app.post('/train-status', async (req, res) => {
-  const { trainNumber } = req.body;
+  const { trainNumber,date } = req.body;
 
   try {
+    const travelDay = format(new Date(date), 'EEEE');
+    const ran = await pool.query(`select * from train t where t.train_no=$1`,[trainNumber]);
+    if(ran.rows.length===0){
+      return res.status(400).json({error: "Invalid train no"});
+    }
     const result = await pool.query(`
       SELECT
         s.station_name AS name,
         r.stop_number,
         r.arrival_time ,
         r.departure_time ,
-        r.arrival_delay_minutes,
-        r.departure_delay_minutes,
-        r.status
+        0 as arrival_delay_minutes ,
+        0 as departure_delay_minutes,
+        'Estimated' as status
       FROM route r
       JOIN stations s ON r.station_id = s.station_id
       JOIN train t ON t.train_id = r.train_id
-      WHERE t.train_no = $1
+      WHERE t.train_no = $1 AND $2 = ANY (t.operating_days)
       ORDER BY r.stop_number
-    `, [trainNumber]);
-  if(result.rows.length===0){
-      res.status(400).json({error: "Invalid Train number"});
-  }
-  else{
-  res.status(200).json({ stations: result.rows });}
+    `, [trainNumber,travelDay]);
+      if(result.rows.length===0){
+          res.status(400).json({error: "Train doesn't run that day"});
+      }
+      else{
+        const result1 = await pool.query(`
+          SELECT
+            s.station_name AS name,
+            r.stop_number,
+            r.arrival_time ,
+            r.departure_time ,
+            d.arrival_delay_minutes ,
+            d.departure_delay_minutes,
+            d.status
+          FROM route r
+          JOIN stations s ON r.station_id = s.station_id
+          JOIN train t ON t.train_id = r.train_id
+          Join delays d on r.route_id = d.route_id
+          WHERE t.train_no = $1 and d.departure_date = $2
+          ORDER BY r.stop_number
+        `, [trainNumber,date]);
+        if(result1.rows.length===0){
+          res.status(200).json({ stations: result.rows });
+         }
+         else{
+         res.status(200).json({ stations: result1.rows });}
+      }
 } catch (error) {
   console.error("Error fetching train status:", error);
   res.status(500).json({ error: "Internal server error" });
-    res.status(200).json({ stations: result.rows });
   }
 });
 
@@ -976,17 +1003,21 @@ app.post('/validate-pnr', async (req, res) => {
 
   try {
     const query = `
-      SELECT booking_id, user_id, train_id, travel_date, booking_status, src_stn, dest_stn
-      FROM Booking
-      WHERE pnr_number = $1 AND user_id = $2
+      SELECT 
+        b.booking_id, b.train_id, b.travel_date, b.booking_status, 
+        b.src_stn, b.dest_stn, b.total_fare, 
+        t.ticket_id, t.passenger_name, t.passenger_gender, t.passenger_age, t.seat_id
+      FROM Booking b
+      JOIN Ticket t ON b.booking_id = t.booking_id
+      WHERE b.pnr_number = $1 AND b.user_id = $2
     `;
     const result = await pool.query(query, [pnrNumber, userId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'PNR not found' });
+      return res.status(404).json({ error: 'PNR not found or no tickets available' });
     }
 
-    res.json(result.rows[0]);
+    res.json({ booking: result.rows[0], tickets: result.rows });
   } catch (err) {
     console.error('Error validating PNR:', err);
     res.status(500).json({ error: 'Server error' });
@@ -1035,6 +1066,88 @@ app.post('/order-food', async (req, res) => {
     await pool.query('ROLLBACK');
     console.error('Error placing order:', err);
     res.status(500).json({ error: 'Failed to place order' });
+  }
+});
+
+
+//////////////////////////Forgot Password//////////////////////////////////
+
+const generateOTP = () => {
+  // Generates a 6-digit OTP
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const sendOtp = async (toEmail,otp) => {
+  // Generate OTP
+
+  const mailOptions = {
+    from: "mybookingsystem1@gmail.com",
+    to: toEmail,
+    subject: "Your OTP for Confirmation",
+    text: `Your OTP for confirmation is: ${otp}\n\nPlease use this OTP to confirm your action.\n\nThank you!`,
+  };
+
+  // Send the OTP email
+  await transporter.sendMail(mailOptions);
+};
+
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const otp = generateOTP();
+    req.session.otp=otp;
+    req.session.usermail=email;
+    console.log(req.session.usermail);
+    sendOtp(email,otp);
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (err) {
+    console.error('Failed sending OTP: ', err);
+    res.status(500).json({ error: 'Failed sending OTP. Please try again.' });
+  }
+});
+app.post('/verify-otp', async (req, res) => {
+  console.log(req.body);
+  const { otp } = req.body;
+  try {
+    const otp1 = req.session.otp;
+    console.log(otp);
+    console.log(otp1);
+    if(otp == otp1){
+
+    res.status(200).json({ message: 'OTP Verified' });
+   }
+   else{
+    res.status(500).json({ error: 'OTP not verified' });
+   }
+
+  } catch (err) {
+    res.status(500).json({ error: 'OTP not verified1' });
+  }
+});
+app.post('/new-password', async (req, res) => {
+  const { newPassword } = req.body;
+  try {
+    const email = req.session.usermail;
+    if (!email) {
+      return res.status(400).json({ error: 'No session found. Please request password reset again.' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10); // Using bcrypt to hash the password
+    const updateQuery = `
+      UPDATE Users
+      SET password = $1
+      WHERE email = $2
+      RETURNING *
+    `;
+    const result = await pool.query(updateQuery, [hashedPassword, email]);
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: 'Password updated successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+
+  } catch (err) {
+    console.error('Error updating password: ', err);
+    res.status(500).json({ error: 'Failed to update password. Please try again.' });
   }
 });
 

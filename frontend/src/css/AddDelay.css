@@ -1,0 +1,35 @@
+.delay-form {
+    max-width: 400px;
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #f2f2f2;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .delay-form input {
+    padding: 8px;
+    font-size: 16px;
+  }
+  
+  .delay-form button {
+    padding: 10px;
+    background-color: #2e86de;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px;
+  }
+  
+  .delay-form button:hover {
+    background-color: #1b4f72;
+  }
+  
+  .message {
+    font-weight: bold;
+    color: green;
+  }
+  
