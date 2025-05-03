@@ -35,14 +35,28 @@
   margin-bottom: 10px;
 }
 
+/* Add to MyTickets.css */
 .ticket-info p {
-  margin: 6px 0;
+  margin: 8px 0;
   color: #555;
+  line-height: 1.5;
 }
 
-.ticket-info .label {
+.ticket-info p .label {
   font-weight: 600;
   color: #333;
+  min-width: 120px;
+  display: inline-block;
+}
+
+/* Style for the route information */
+.ticket-info p:nth-child(2) {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.ticket-info p:nth-child(2) .label + span {
+  color: #007bff;
 }
 
 .passenger-list {

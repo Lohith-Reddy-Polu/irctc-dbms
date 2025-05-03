@@ -20,6 +20,7 @@ import Orderfood from './pages/Orderfood';
 import ForgotPassword from './pages/ForgotPassword';
 import AddDelay from './pages/AddDelay';
 import PnrEnquiry from './pages/PnrEnquiry';
+import CancelTicket from './pages/CancelTicket' ;
 import './styles.css';
 
 const App = () => {
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />  
         <Route path="/add-delay" element={< AddDelay/>} /> 
         <Route path="/pnr-enquiry" element={< PnrEnquiry/>} /> 
+        <Route path="/cancel-ticket" element={< CancelTicket/>} /> 
       </Routes>
     </div>
   );

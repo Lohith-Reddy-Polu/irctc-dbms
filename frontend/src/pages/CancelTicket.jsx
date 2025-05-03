@@ -1,114 +1,177 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+// import { useLocation, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import { apiUrl } from "../config/config";
-import "../css/orderfood.css";
+import '../css/CancelTicket.css';
 
 const CancelTicket = () => {
-  const [pnr, setPnr] = useState('');
-  const [booking, setBooking] = useState(null);
-  const [tickets, setTickets] = useState([]);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+    const [bookings, setBookings] = useState([]);
+    const [selectedBooking, setSelectedBooking] = useState("");
+    const [tickets, setTickets] = useState([]);
+    const [selectedTickets, setSelectedTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  const validatePNR = async (pnrNumber) => {
-    const res = await fetch(`${apiUrl}/validate-pnr`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ pnrNumber }),
-    });
+    useEffect(() => {
+        fetchBookings();
+    }, []);
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "PNR not valid");
-    return data;
-  };
+    const fetchBookings = async () => {
+        try {
+            const response = await fetch(`${apiUrl}/future-bookings`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                setBookings(data);
+            } else {
+                setError(data.error);
+            }
+        } catch (err) {
+            setError('Failed to fetch bookings');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const cancelTicket = async (ticketId) => {
-    try {
-      const res = await fetch(`${apiUrl}/cancel-ticket`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ ticketId }),
-      });
+    const fetchTickets = async (bookingId) => {
+        try {
+            const response = await fetch(`${apiUrl}/booking-tickets/${bookingId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                setTickets(data);
+                setSelectedTickets([]);
+            } else {
+                setError(data.error);
+            }
+        } catch (err) {
+            setError('Failed to fetch tickets');
+        }
+    };
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Cancellation failed");
+    const handleBookingSelect = (e) => {
+        const bookingId = e.target.value;
+        setSelectedBooking(bookingId);
+        if (bookingId) {
+            fetchTickets(bookingId);
+        } else {
+            setTickets([]);
+            setSelectedTickets([]);
+        }
+    };
 
-      setTickets(prev => prev.filter(t => t.ticket_id !== ticketId));
-      setMessage(`Ticket ${ticketId} cancelled successfully.`);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+    const handleTicketSelect = (ticketId) => {
+        setSelectedTickets(prev => {
+            if (prev.includes(ticketId)) {
+                return prev.filter(id => id !== ticketId);
+            } else {
+                return [...prev, ticketId];
+            }
+        });
+    };
 
-  const handleSubmitPNR = async () => {
-    try {
-      setError('');
-      setMessage('');
-      const data = await validatePNR(pnr);
-      setBooking(data.booking);
-      setTickets(data.tickets);
-    } catch (err) {
-      setBooking(null);
-      setTickets([]);
-      setError(err.message);
-    }
-  };
+    const handleCancelTickets = async () => {
+        if (!selectedTickets.length) {
+            setError('Please select tickets to cancel');
+            return;
+        }
 
-  return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Cancel Your Ticket</h1>
+        if (!window.confirm('Are you sure you want to cancel the selected tickets?')) {
+            return;
+        }
 
-      <div className="flex mb-4">
-        <input
-          type="text"
-          placeholder="Enter PNR number"
-          value={pnr}
-          onChange={e => setPnr(e.target.value)}
-          className="border p-2 flex-1"
-        />
-        <button onClick={handleSubmitPNR} className="ml-2 bg-blue-500 text-white p-2 rounded">
-          Submit
-        </button>
-      </div>
+        try {
+            const response = await fetch(`${apiUrl}/cancel-tickets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ ticketIds: selectedTickets }),
+            });
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-      {message && <p className="text-green-600 mt-2">{message}</p>}
+            const data = await response.json();
 
-      {tickets.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-2">Passengers:</h2>
-          <table className="w-full table-auto border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 border">Name</th>
-                <th className="p-2 border">Gender</th>
-                <th className="p-2 border">Age</th>
-                <th className="p-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map(ticket => (
-                <tr key={ticket.ticket_id} className="text-center">
-                  <td className="p-2 border">{ticket.passenger_name}</td>
-                  <td className="p-2 border">{ticket.passenger_gender}</td>
-                  <td className="p-2 border">{ticket.passenger_age}</td>
-                  <td className="p-2 border">
-                    <button
-                      onClick={() => cancelTicket(ticket.ticket_id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            if (response.ok) {
+                alert('Tickets cancelled successfully');
+                fetchTickets(selectedBooking);
+            } else {
+                setError(data.error);
+            }
+        } catch (err) {
+            setError('Failed to cancel tickets');
+        }
+    };
+
+    if (loading) return <div className="loading">Loading...</div>;
+    if (error) return <div className="error">{error}</div>;
+
+    return (
+        <div className="cancel-ticket-container">
+            <Navbar isAdmin={false} />
+            <h2>Cancel Tickets</h2>
+
+            <div className="booking-select-container">
+                <select 
+                    value={selectedBooking}
+                    onChange={handleBookingSelect}
+                    className="booking-select"
+                >
+                    <option value="">Select a booking</option>
+                    {bookings.map(booking => (
+                        <option key={booking.booking_id} value={booking.booking_id}>
+                            {`${booking.train_name} - ${new Date(booking.travel_date).toLocaleDateString()} - PNR: ${booking.pnr_number}`}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {tickets.length > 0 && (
+                <div className="tickets-container">
+                    {tickets.map(ticket => (
+                        <div key={ticket.ticket_id} className="ticket-card">
+                            <div className="ticket-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedTickets.includes(ticket.ticket_id)}
+                                    onChange={() => handleTicketSelect(ticket.ticket_id)}
+                                    disabled={ticket.booking_status === 'Cancelled'}
+                                />
+                            </div>
+                            <div className="ticket-info">
+                                <h3>{ticket.passenger_name}</h3>
+                                <p>Age: {ticket.passenger_age} | Gender: {ticket.passenger_gender}</p>
+                                <p>
+                                    Class: {ticket.class} | Coach: {ticket.bhogi} | 
+                                    Seat: {ticket.seat_number}
+                                </p>
+                                <p>
+                                    Status: {ticket.booking_status}
+                                    {ticket.booking_status === 'Waiting' && 
+                                        ` (WL ${ticket.waitlist_number})`}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    {selectedTickets.length > 0 && (
+                        <div className="cancel-actions">
+                            <button 
+                                className="cancel-selected-btn"
+                                onClick={handleCancelTickets}
+                            >
+                                Cancel Selected Tickets ({selectedTickets.length})
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default CancelTicket;

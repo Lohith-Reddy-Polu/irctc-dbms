@@ -765,7 +765,7 @@ app.get('/available-seats', async (req, res) => {
       SELECT T.seat_id, B.src_stn, B.dest_stn
       FROM Ticket T 
       JOIN Booking B ON T.booking_id = B.booking_id
-      WHERE B.train_id = $1 AND B.train_class = $2 AND B.travel_date = $3
+      WHERE B.train_id = $1 AND B.train_class = $2 AND B.travel_date = $3 AND T.booking_status = 'Confirmed'
     `;
     
     const bookings = await pool.query(bookingsQuery, [trainId, train_class, travel_date]);
@@ -908,7 +908,8 @@ app.post('/train-status', async (req, res) => {
   }
 });
 
-
+// Backend: app.get("/my-tickets")
+// Backend: app.get("/my-tickets")
 app.get("/my-tickets", isAuthenticated, async (req, res) => {
   const user_id = req.session.userId;
   if (!user_id) return res.status(401).json({ error: "Not logged in" });
@@ -921,11 +922,17 @@ app.get("/my-tickets", isAuthenticated, async (req, res) => {
          T.train_id, T.train_name, T.train_no,
          Tk.ticket_id, Tk.passenger_name, Tk.passenger_gender, Tk.passenger_age, 
          Tk.booking_status, Tk.waitlist_number,
-         S.seat_id, S.class, S.bhogi, S.seat_number
+         S.seat_id, S.class, S.bhogi, S.seat_number,
+         src_stn.station_name as source_station_name,
+         src_stn.station_code as source_station_code,
+         dest_stn.station_name as destination_station_name,
+         dest_stn.station_code as destination_station_code
        FROM Booking B
        JOIN Train T ON B.train_id = T.train_id
        JOIN Ticket Tk ON B.booking_id = Tk.booking_id
        LEFT JOIN Seats S ON Tk.seat_id = S.seat_id
+       JOIN Stations src_stn ON B.src_stn = src_stn.station_id
+       JOIN Stations dest_stn ON B.dest_stn = dest_stn.station_id
        WHERE B.user_id = $1
        ORDER BY B.booking_date DESC`,
       [user_id]
@@ -943,6 +950,14 @@ app.get("/my-tickets", isAuthenticated, async (req, res) => {
           total_fare: row.total_fare,
           train_name: row.train_name,
           train_no: row.train_no,
+          source_station: {
+            name: row.source_station_name,
+            code: row.source_station_code
+          },
+          destination_station: {
+            name: row.destination_station_name,
+            code: row.destination_station_code
+          },
           passengers: []
         };
       }
@@ -1196,3 +1211,329 @@ app.post('/pnr-enquiry', async (req, res) => {
 });
 
 module.exports = app;
+
+
+////////////////////////CANCEL TICKETS///////////////////////////
+
+// Function to send cancellation email
+const sendCancellationEmail = async (toEmail, cancellationDetails) => {
+  const { pnr, trainName, travelDate, cancelledTickets, refundAmount } = cancellationDetails;
+
+  const mailOptions = {
+    from: "mybookingsystem1@gmail.com",
+    to: toEmail,
+    subject: `Ticket Cancellation Confirmation - PNR ${pnr}`,
+    text: `Your ticket(s) have been cancelled successfully!\n\n` +
+          `Train: ${trainName}\n` +
+          `Date: ${travelDate}\n` +
+          `PNR: ${pnr}\n` +
+          `Cancelled Tickets:\n${cancelledTickets.map(t => 
+            `Passenger: ${t.passenger_name}`
+          ).join('\n')}\n` +
+          `Refund Amount: ₹${refundAmount}\n\n` +
+          `Thank you for using our service!`
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Function to send confirmation email for waitlist cleared
+const sendWaitlistClearedEmail = async (toEmail, confirmationDetails) => {
+  const { pnr, trainName, travelDate, passenger, seatDetails } = confirmationDetails;
+
+  const mailOptions = {
+    from: "mybookingsystem1@gmail.com",
+    to: toEmail,
+    subject: `Waitlist Cleared - Ticket Confirmed - PNR ${pnr}`,
+    text: `Great news! Your waitlisted ticket has been confirmed!\n\n` +
+          `Train: ${trainName}\n` +
+          `Date: ${travelDate}\n` +
+          `PNR: ${pnr}\n` +
+          `Passenger: ${passenger.passenger_name}\n` +
+          `Seat: ${seatDetails.bhogi}-${seatDetails.seat_number}\n\n` +
+          `Have a great journey!`
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Function to check and update waitlist
+async function processWaitlist(client, train_id, train_class, travel_date) {
+  try {
+    // Get all waitlisted tickets
+    const waitlistedTicketsQuery = `
+      SELECT t.ticket_id, t.booking_id, t.passenger_name, t.passenger_gender, 
+             t.passenger_age, t.waitlist_number, b.src_stn, b.dest_stn, u.email,
+             b.pnr_number
+      FROM Ticket t
+      JOIN Booking b ON t.booking_id = b.booking_id
+      JOIN Users u ON b.user_id = u.user_id
+      WHERE b.train_id = $1 AND b.train_class = $2 
+      AND b.travel_date = $3 AND t.booking_status = 'Waiting'
+      ORDER BY t.waitlist_number
+    `;
+
+    const waitlistedTickets = await client.query(waitlistedTicketsQuery, 
+      [train_id, train_class, travel_date]);
+
+    const confirmedTicketIds = [];
+
+    // Process each waitlisted ticket
+    for (const ticket of waitlistedTickets.rows) {
+      // Check for available seat
+      const availableSeatsQuery = `
+        SELECT s.seat_id, s.bhogi, s.seat_number
+        FROM Seats s
+        WHERE s.train_id = $1 AND s.class = $2 AND s.bhogi != 'WL'
+        AND NOT EXISTS (
+          SELECT 1 FROM Ticket t2
+          JOIN Booking b2 ON t2.booking_id = b2.booking_id
+          WHERE t2.seat_id = s.seat_id
+          AND b2.travel_date = $3
+          AND t2.booking_status = 'Confirmed'
+          AND EXISTS (
+            SELECT 1 FROM UNNEST($4::int[]) station_id
+            WHERE station_id BETWEEN b2.src_stn AND b2.dest_stn
+          )
+        )
+        LIMIT 1
+      `;
+
+      const stationIds = await getStationIdsBetween(train_id, ticket.src_stn, ticket.dest_stn);
+      const availableSeat = await client.query(availableSeatsQuery, 
+        [train_id, train_class, travel_date, stationIds]);
+
+      if (availableSeat.rows.length > 0) {
+        // Update ticket to confirmed status
+        await client.query(
+          `UPDATE Ticket 
+           SET booking_status = 'Confirmed', 
+               seat_id = $1, 
+               waitlist_number = 0
+           WHERE ticket_id = $2`,
+          [availableSeat.rows[0].seat_id, ticket.ticket_id]
+        );
+
+        confirmedTicketIds.push(ticket.ticket_id);
+
+        // Get train details for email
+        const trainDetails = await client.query(
+          `SELECT train_name FROM Train WHERE train_id = $1`,
+          [train_id]
+        );
+
+        // Send confirmation email
+        await sendWaitlistClearedEmail(ticket.email, {
+          pnr: ticket.pnr_number, // Now we have the PNR
+          trainName: trainDetails.rows[0].train_name,
+          travelDate: travel_date,
+          passenger: ticket,
+          seatDetails: availableSeat.rows[0]
+        });
+      }
+    }
+
+    // Update remaining waitlist numbers to be sequential
+    if (confirmedTicketIds.length > 0) {
+      const updateWaitlistQuery = `
+        WITH ranked AS (
+          SELECT 
+            ticket_id,
+            ROW_NUMBER() OVER (ORDER BY waitlist_number) as new_waitlist_number
+          FROM Ticket t
+          JOIN Booking b ON t.booking_id = b.booking_id
+          WHERE b.train_id = $1 
+          AND b.train_class = $2 
+          AND b.travel_date = $3 
+          AND t.booking_status = 'Waiting'
+        )
+        UPDATE Ticket 
+        SET waitlist_number = ranked.new_waitlist_number
+        FROM ranked
+        WHERE Ticket.ticket_id = ranked.ticket_id
+      `;
+
+      await client.query(updateWaitlistQuery, [train_id, train_class, travel_date]);
+    }
+
+  } catch (error) {
+    console.error('Error processing waitlist:', error);
+    throw error;
+  }
+}
+
+// Cancel ticket endpoint
+app.post('/cancel-tickets', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { ticketIds } = req.body;
+    
+    if (!Array.isArray(ticketIds) || ticketIds.length === 0) {
+      return res.status(400).json({ error: 'Invalid ticket IDs' });
+    }
+
+    await client.query('BEGIN');
+
+    // Get booking details for these tickets
+    const ticketDetailsQuery = `
+      SELECT t.ticket_id, t.booking_id, t.passenger_name, b.train_id, 
+             b.train_class, b.travel_date, b.user_id, b.pnr_number,
+             tr.train_name
+      FROM Ticket t
+      JOIN Booking b ON t.booking_id = b.booking_id
+      JOIN Train tr ON b.train_id = tr.train_id
+      WHERE t.ticket_id = ANY($1)
+    `;
+
+    const ticketDetails = await client.query(ticketDetailsQuery, [ticketIds]);
+
+    if (ticketDetails.rows.length === 0) {
+      throw new Error('No valid tickets found');
+    }
+
+    // Update tickets to cancelled status
+    await client.query(
+      `UPDATE Ticket 
+       SET booking_status = 'Cancelled'
+       WHERE ticket_id = ANY($1)`,
+      [ticketIds]
+    );
+
+    // Get user email
+    const userEmail = await client.query(
+      `SELECT email FROM Users WHERE user_id = $1`,
+      [ticketDetails.rows[0].user_id]
+    );
+
+    // Calculate refund amount (simplified version)
+    const refundAmount = 100; // Replace with actual refund calculation
+
+    // Send cancellation email
+    await sendCancellationEmail(userEmail.rows[0].email, {
+      pnr: ticketDetails.rows[0].pnr_number,
+      trainName: ticketDetails.rows[0].train_name,
+      travelDate: ticketDetails.rows[0].travel_date,
+      cancelledTickets: ticketDetails.rows,
+      refundAmount
+    });
+
+    // Process waitlist
+    await processWaitlist(
+      client,
+      ticketDetails.rows[0].train_id,
+      ticketDetails.rows[0].train_class,
+      ticketDetails.rows[0].travel_date
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      message: 'Tickets cancelled successfully',
+      cancelledTickets: ticketIds.length,
+      refundAmount
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error cancelling tickets:', error);
+    res.status(500).json({ error: 'Failed to cancel tickets' });
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/future-bookings', async (req, res) => {
+  try {
+    // Get user_id from session
+    const user_id = req.session.userId;
+    if (!user_id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const query = `
+      SELECT 
+        b.booking_id,
+        t.train_name,
+        b.travel_date,
+        b.pnr_number,
+        s1.station_name as src_station,
+        s2.station_name as dest_station,
+        b.train_class,
+        b.total_fare
+      FROM Booking b
+      JOIN Train t ON b.train_id = t.train_id
+      JOIN Stations s1 ON b.src_stn = s1.station_id
+      JOIN Stations s2 ON b.dest_stn = s2.station_id
+      WHERE b.user_id = $1 
+      AND b.travel_date > CURRENT_DATE
+      ORDER BY b.travel_date ASC
+    `;
+
+    const result = await pool.query(query, [user_id]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching future bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+app.get('/booking-tickets/:bookingId', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const user_id = req.session.userId;
+
+    if (!user_id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // First verify this booking belongs to the user
+    const verifyQuery = `
+      SELECT 1 FROM Booking 
+      WHERE booking_id = $1 AND user_id = $2
+    `;
+    
+    const verifyResult = await pool.query(verifyQuery, [bookingId, user_id]);
+    
+    if (verifyResult.rows.length === 0) {
+      return res.status(403).json({ error: 'Unauthorized access to booking' });
+    }
+
+    // Get all tickets for this booking
+    const query = `
+      SELECT 
+        t.ticket_id,
+        t.passenger_name,
+        t.passenger_age,
+        t.passenger_gender,
+        t.booking_status,
+        t.waitlist_number,
+        CASE 
+          WHEN s.bhogi = 'WL' THEN NULL
+          ELSE s.bhogi
+        END as bhogi,
+        CASE 
+          WHEN s.bhogi = 'WL' THEN NULL
+          ELSE s.seat_number
+        END as seat_number,
+        s.class
+      FROM Ticket t
+      JOIN Seats s ON t.seat_id = s.seat_id
+      WHERE t.booking_id = $1
+      ORDER BY 
+        CASE 
+          WHEN t.booking_status = 'Confirmed' THEN 1
+          WHEN t.booking_status = 'Waiting' THEN 2
+          ELSE 3
+        END,
+        t.waitlist_number
+    `;
+
+    const result = await pool.query(query, [bookingId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching booking tickets:', error);
+    res.status(500).json({ error: 'Failed to fetch tickets' });
+  }
+});
