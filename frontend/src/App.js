@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound';
 import LiveTrainTracker from './pages/LiveTrainTracker';
 import DeleteAccount from './pages/DeleteAccount';
 import Profile from './pages/Profile';
+import Orderfood from './pages/Orderfood';
 import './styles.css';
 
 const App = () => {
@@ -39,6 +40,7 @@ const App = () => {
         <Route path="/live-status" element={<LiveTrainTracker />} />    
         <Route path="/delete-account" element={<DeleteAccount />} />    
         <Route path="/profile" element={<Profile />} />  
+        <Route path="/order-food" element={<Orderfood />} />  
       </Routes>
     </div>
   );

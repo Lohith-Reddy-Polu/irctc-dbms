@@ -103,3 +103,28 @@ CREATE TABLE Ticket (
     passenger_gender gender_enum NOT NULL,
     passenger_age INT NOT NULL CHECK (passenger_age BETWEEN 1 AND 120)
 );
+
+
+CREATE TABLE food_item (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  price DECIMAL(10, 2)
+);
+
+CREATE TABLE Booking_food (
+  booking_id SERIAL PRIMARY KEY,
+  user_id INT,
+  pnr_number VARCHAR(10),
+  train_id INT,
+  travel_date DATE,
+  booking_status VARCHAR(50),
+  src_stn VARCHAR(50),
+  dest_stn VARCHAR(50)
+);
+
+CREATE TABLE order_details (
+  order_id SERIAL PRIMARY KEY,
+  booking_id INT REFERENCES Booking(booking_id),
+  food_item_id INT REFERENCES food_item(id),
+  quantity INT
+);

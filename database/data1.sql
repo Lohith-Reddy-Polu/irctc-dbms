@@ -86,3 +86,8 @@ INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
 -- SLP: B4
 INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
 (3, 'SLP', 'B4', 1), (3, 'SLP', 'B4', 2), (3, 'SLP', 'B4', 3), (3, 'SLP', 'B4', 4), (3, 'SLP', 'B4', 5), (3, 'SLP', 'B4', 6), (3, 'SLP', 'B4', 7), (3, 'SLP', 'B4', 8), (3, 'SLP', 'B4', 9), (3, 'SLP', 'B4', 10);
+
+INSERT INTO food_item (name, price) VALUES 
+('Veg Biryani', 120.00),
+('Paneer Thali', 150.00),
+('Chicken Curry', 180.00);

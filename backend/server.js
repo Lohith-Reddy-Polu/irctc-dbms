@@ -17,10 +17,10 @@ const port = 4000;
 
 // PostgreSQL connection
 const pool = new Pool({
-  user: 'project',
+  user: 'postgres',
   host: 'localhost',
   database: 'irctc',
-  password: 'project',
+  password: 'Mukhi@0412',
   port: 5432,
 });
 
@@ -849,6 +849,78 @@ app.get("/logout", (req, res) => {
 
 
 
+///////////////////////////////ORDER FOOD //////////////////////////////////////////
+app.post('/validate-pnr', async (req, res) => {
+  const { pnrNumber } = req.body;
+  const userId = req.session.userId;
+
+  if (!pnrNumber || pnrNumber.length < 6) {
+    return res.status(400).json({ error: 'Invalid PNR format' });
+  }
+
+  try {
+    const query = `
+      SELECT booking_id, user_id, train_id, travel_date, booking_status, src_stn, dest_stn
+      FROM Booking
+      WHERE pnr_number = $1 AND user_id = $2
+    `;
+    const result = await pool.query(query, [pnrNumber, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'PNR not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error validating PNR:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Fetch Food Items
+app.get('/food-items', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM food_item');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching food items:', err);
+    res.status(500).json({ error: 'Failed to fetch food items' });
+  }
+});
+
+// Place an Order
+app.post('/order-food', async (req, res) => {
+  const { booking_id, items } = req.body;
+
+  if (!booking_id || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Invalid order data' });
+  }
+
+  try {
+    // Begin a transaction to ensure data consistency
+    await pool.query('BEGIN');
+
+    // Insert each item into the order details
+    for (const item of items) {
+      const { id, quantity } = item;
+      const query = `
+        INSERT INTO order_details (booking_id, food_item_id, quantity)
+        VALUES ($1, $2, $3)
+      `;
+      await pool.query(query, [booking_id, id, quantity]);
+    }
+
+    // Commit the transaction
+    await pool.query('COMMIT');
+
+    res.json({ message: 'Order placed successfully' });
+  } catch (err) {
+    // Rollback in case of an error
+    await pool.query('ROLLBACK');
+    console.error('Error placing order:', err);
+    res.status(500).json({ error: 'Failed to place order' });
+  }
+});
 
 // Start server
 app.listen(port, () => {

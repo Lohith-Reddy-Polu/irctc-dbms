@@ -1,0 +1,157 @@
+/* General Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Container for the whole page */
+  .p-6 {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Title */
+  h1 {
+    text-align: center;
+    font-size: 1.75rem;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Input Field */
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border 0.3s;
+  }
+  
+  input[type="text"]:focus {
+    border-color: #007BFF;
+    outline: none;
+  }
+  
+  /* Button Styles */
+  button {
+    padding: 10px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  /* Specific button styles */
+  .bg-blue-500 {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+  }
+  
+  .bg-blue-500:hover {
+    background-color: #0056b3;
+  }
+  
+  .bg-green-500 {
+    background-color: #28a745;
+    color: #fff;
+  }
+  
+  .bg-green-500:hover {
+    background-color: #218838;
+  }
+  
+  .bg-red-500 {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  
+  .bg-red-500:hover {
+    background-color: #c82333;
+  }
+  
+  .bg-purple-600 {
+    background-color: #6f42c1;
+    color: #fff;
+  }
+  
+  .bg-purple-600:hover {
+    background-color: #5a32a3;
+  }
+  
+  /* Error and Confirmation Messages */
+  .text-red-500 {
+    color: #dc3545;
+    font-size: 1rem;
+  }
+  
+  .text-green-600 {
+    color: #28a745;
+    font-size: 1rem;
+  }
+  
+  /* Food Items and Cart Styling */
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  li {
+    background-color: #f9f9f9;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s;
+  }
+  
+  li:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Cart Section */
+  .mt-6 {
+    margin-top: 24px;
+  }
+  
+  .mt-2 {
+    margin-top: 8px;
+  }
+  
+  .font-semibold {
+    font-weight: 600;
+  }
+  
+  /* Flexbox Utility Classes */
+  .flex {
+    display: flex;
+  }
+  
+  .justify-between {
+    justify-content: space-between;
+  }
+  
+  .items-center {
+    align-items: center;
+  }
+  
+  /* Spacing between elements */
+  .ml-2 {
+    margin-left: 8px;
+  }
+  
+  .ml-4 {
+    margin-left: 16px;
+  }
+  
