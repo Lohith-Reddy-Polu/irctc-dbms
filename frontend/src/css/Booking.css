@@ -169,6 +169,10 @@
 
 .passenger input[type="text"] {
   flex: 2;
+  min-width: 200px;    
+  color: #000;         
+  font-size: 14px;     
+  background: white;  
 }
 
 .passenger input[type="number"] {
@@ -206,14 +210,12 @@
 }
 
 .remove-btn {
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  padding: 4px 8px;  
+  font-size: 12px;    
+  height: 28px;        
+  width: auto;         
 }
+
 
 .remove-btn:hover {
   background-color: #ff7875;

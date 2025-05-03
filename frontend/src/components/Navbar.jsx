@@ -40,6 +40,9 @@ const Navbar = ({ isAdmin }) => {
               My Tickets
             </button>
           </li>
+          <li>
+              <button onClick={() => navigate("/delete-account")}>Delete Account</button>
+            </li>
           </>
         )}
         {isAdmin && (
@@ -65,9 +68,6 @@ const Navbar = ({ isAdmin }) => {
         </li>
         <li>
           <button onClick={() => navigate("/live-status")}>Live Status</button>
-        </li>
-        <li>
-          <button onClick={() => navigate("/delete-account")}>Delete Account</button>
         </li>
         <li>
           <button onClick={() => navigate("/profile")}>Profile</button>

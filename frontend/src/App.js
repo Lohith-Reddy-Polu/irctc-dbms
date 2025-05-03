@@ -19,6 +19,7 @@ import Profile from './pages/Profile';
 import Orderfood from './pages/Orderfood';
 import ForgotPassword from './pages/ForgotPassword';
 import AddDelay from './pages/AddDelay';
+import CancelTicket from './pages/CancelTicket';
 import './styles.css';
 
 const App = () => {
@@ -44,7 +45,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />  
         <Route path="/order-food" element={<Orderfood />} />  
         <Route path="/forgot-password" element={<ForgotPassword />} />  
-        <Route path="/add-delay" element={< AddDelay/>} /> 
+        <Route path="/add-delay" element={< AddDelay/>} />         
       </Routes>
     </div>
   );

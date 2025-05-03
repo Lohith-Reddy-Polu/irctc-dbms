@@ -103,9 +103,23 @@ INSERT INTO Delays (route_id, departure_date, arrival_delay_minutes, departure_d
 (5, '2025-05-02', 15, 0, 'Estimated'),
 (6, '2025-05-02', 15, 11, 'Estimated');
 
--- Add dummy seats for waitlisted tickets (one for each class)
+
 INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
-(1, 'SLP', 'WL', 0),
 (1, '1AC', 'WL', 0),
 (1, '2AC', 'WL', 0),
-(1, '3AC', 'WL', 0);
+(1, '3AC', 'WL', 0),
+(1, 'SLP', 'WL', 0);
+
+-- Dummy waitlist seats for LTT Jayanthi Exp (train_id = 2)
+INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
+(2, '1AC', 'WL', 0),
+(2, '2AC', 'WL', 0),
+(2, '3AC', 'WL', 0),
+(2, 'SLP', 'WL', 0);
+
+-- Dummy waitlist seats for Poorva Express (train_id = 3)
+INSERT INTO Seats (train_id, class, bhogi, seat_number) VALUES
+(3, '1AC', 'WL', 0),
+(3, '2AC', 'WL', 0),
+(3, '3AC', 'WL', 0),
+(3, 'SLP', 'WL', 0);
