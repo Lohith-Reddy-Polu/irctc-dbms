@@ -135,25 +135,27 @@ const CancelTicket = () => {
                     {tickets.map(ticket => (
                         <div key={ticket.ticket_id} className="ticket-card">
                             <div className="ticket-checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedTickets.includes(ticket.ticket_id)}
-                                    onChange={() => handleTicketSelect(ticket.ticket_id)}
-                                    disabled={ticket.booking_status === 'Cancelled'}
-                                />
+                            <input
+                                type="checkbox"
+                                checked={selectedTickets.includes(ticket.ticket_id)}
+                                onChange={() => handleTicketSelect(ticket.ticket_id)}
+                                disabled={ticket.booking_status === 'Cancelled'}
+                            />
                             </div>
                             <div className="ticket-info">
-                                <h3>{ticket.passenger_name}</h3>
-                                <p>Age: {ticket.passenger_age} | Gender: {ticket.passenger_gender}</p>
-                                <p>
-                                    Class: {ticket.class} | Coach: {ticket.bhogi} | 
-                                    Seat: {ticket.seat_number}
-                                </p>
-                                <p>
-                                    Status: {ticket.booking_status}
-                                    {ticket.booking_status === 'Waiting' && 
-                                        ` (WL ${ticket.waitlist_number})`}
-                                </p>
+                            <h3>{ticket.passenger_name}</h3>
+                            <p>Age: {ticket.passenger_age} | Gender: {ticket.passenger_gender}</p>
+                            <p>
+                                Class: {ticket.class} | Coach: {ticket.bhogi} | 
+                                Seat: {ticket.seat_number}
+                            </p>
+                            <p 
+                                data-status={ticket.booking_status}
+                            >
+                                Status: {ticket.booking_status}
+                                {ticket.booking_status === 'Waiting' && 
+                                ` (WL ${ticket.waitlist_number})`}
+                            </p>
                             </div>
                         </div>
                     ))}

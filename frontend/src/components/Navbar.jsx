@@ -30,60 +30,139 @@ const Navbar = ({ isAdmin }) => {
       <ul>
         {!isAdmin && (
           <>
-          <li>
-            <button onClick={() => navigate("/user-dashboard")}>
-              User Dashboard
-            </button>
-          </li>
             <li>
-            <button onClick={() => navigate("/my-tickets")}>
-              My Tickets
-            </button>
-          </li>
-          <li>
-            <button onClick={() => navigate("/delete-account")}>Delete Account</button>
-          </li>
-          <li>
-            <button onClick={() => navigate("/cancel-ticket")}>Cancel Ticket</button>
-          </li>
-          <li>
-          <button onClick={() => navigate("/order-food")}>Order Food</button>
-        </li>
-        <li>
-          <button onClick={() => navigate("/pnr-enquiry")}>PNR ENQUIRY</button>
-        </li>
-        <li>
-          <button onClick={() => navigate("/FAQ")}>FAQ</button>
-        </li>
-          </>
-        )}
-        {isAdmin && (
-          <>
-            <li>
-              <button onClick={() => navigate("/admin-dashboard")}>
-                Admin Dashboard
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/user-dashboard")}
+                title="User Dashboard"
+              >
+                Dashboard
               </button>
             </li>
             <li>
-              <button onClick={() => navigate("/add-train")}>Add Train</button>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/my-tickets")}
+                title="My Tickets"
+              >
+                Tickets
+              </button>
             </li>
             <li>
-              <button onClick={() => navigate("/add-delay")}>Add Delay</button>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/delete-account")}
+                title="Delete Account"
+              >
+                Delete A/C
+              </button>
             </li>
-            
+            <li>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/cancel-ticket")}
+                title="Cancel Ticket"
+              >
+                Cancel Ticket
+              </button>
+            </li>
+            <li>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/order-food")}
+                title="Order Food"
+              >
+                Food
+              </button>
+            </li>
+            <li>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/pnr-enquiry")}
+                title="PNR Enquiry"
+              >
+                PNR
+              </button>
+            </li>
+            <li>
+              <button 
+                data-type="user" 
+                onClick={() => navigate("/FAQ")}
+                title="Frequently Asked Questions"
+              >
+                FAQ
+              </button>
+            </li>
           </>
         )}
+
+        {isAdmin && (
+          <>
+            <li>
+              <button 
+                data-type="admin" 
+                onClick={() => navigate("/admin-dashboard")}
+                title="Admin Dashboard"
+              >
+                Dashboard
+              </button>
+            </li>
+            <li>
+              <button 
+                data-type="admin" 
+                onClick={() => navigate("/add-train")}
+                title="Add Train"
+              >
+                Add Train
+              </button>
+            </li>
+            <li>
+              <button 
+                data-type="admin" 
+                onClick={() => navigate("/add-delay")}
+                title="Add Delay"
+              >
+                Add Delay
+              </button>
+            </li>
+          </>
+        )}
+
         <li>
-          <button onClick={() => navigate("/trains")}>Trains</button>
+          <button 
+            data-type="common" 
+            onClick={() => navigate("/trains")}
+            title="Available Trains"
+          >
+            Trains
+          </button>
         </li>
         <li>
-          <button onClick={handleLogout}>Logout</button> {/* ✅ Fix here */}
+          <button 
+            data-type="logout" 
+            onClick={handleLogout}
+            title="Logout"
+          >
+            Logout
+          </button>
         </li>
         <li>
-          <button onClick={() => navigate("/live-status")}>Live Status</button>
+          <button 
+            data-type="common" 
+            onClick={() => navigate("/live-status")}
+            title="Train Live Status"
+          >
+            Live Status
+          </button>
         </li>
         <li>
-          <button onClick={() => navigate("/profile")}>Profile</button>
+          <button 
+            data-type="common" 
+            onClick={() => navigate("/profile")}
+            title="User Profile"
+          >
+            Profile
+          </button>
         </li>
       </ul>
     </nav>

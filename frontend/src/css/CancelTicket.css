@@ -1,44 +1,188 @@
-.ticket-checkbox {
-    margin-right: 15px;
-}
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --background-color: #f4f6f7;
+    --text-color: #333;
+    --white: #ffffff;
+  }
+  
+  .cancel-ticket-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .booking-select-container {
+    margin-bottom: 20px;
+    position: relative;
 
-.ticket-checkbox input[type="checkbox"] {
+  }
+  
+  .booking-select {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    appearance: none;
+    background: #ffffff;
+    background-size: 24px;
+    transition: all 0.3s ease;
+  }
+  
+  .booking-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(230, 232, 234, 0.2);
+  }
+  
+  .tickets-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+  
+  .ticket-card {
+    background-color: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    display: flex;
+    align-items: start;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ticket-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
+  
+  .ticket-checkbox {
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .ticket-checkbox input[type="checkbox"] {
+    appearance: none;
     width: 20px;
     height: 20px;
-    cursor: pointer;
-}
-
-.cancel-actions {
-    margin-top: 20px;
-    text-align: right;
-}
-
-.cancel-selected-btn {
-    background-color: #ff4444;
-    color: white;
-    border: none;
-    padding: 10px 20px;
+    border: 2px solid #a0a0a0;
     border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .ticket-checkbox input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .ticket-checkbox input[type="checkbox"]:checked::after {
+    content: '✔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--white);
+    font-size: 12px;
+  }
+  
+  .ticket-checkbox input[type="checkbox"]:disabled {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+  }
+  
+  .ticket-info {
+    flex-grow: 1;
+    font-size: 14px;
+  }
+  
+  .ticket-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: var(--primary-color);
+  }
+  
+  .ticket-info p {
+    margin: 5px 0;
+    color: #666;
+  }
+  
+  .ticket-info p:last-child {
+    font-weight: 600;
+  }
+  
+  .ticket-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: var(--primary-color);
+  }
+  
+  .cancel-actions {
+    margin-top: 20px;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .cancel-selected-btn {
+    background-color: var(--danger-color);
+    color: var(--white);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
-}
-
-.cancel-selected-btn:hover {
-    background-color: #cc0000;
-}
-
-.loading {
-    text-align: center;
-    padding: 20px;
-    font-size: 18px;
-    color: #666;
-}
-
-.error {
-    color: #ff4444;
-    text-align: center;
-    padding: 20px;
-    background-color: #ffe6e6;
-    border-radius: 4px;
-    margin: 20px 0;
-}
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .cancel-selected-btn:hover {
+    background-color: darken(#e74c3c, 10%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .cancel-selected-btn:active {
+    transform: scale(0.98);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .tickets-container {
+      grid-template-columns: 1fr;
+    }
+  
+    .ticket-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .ticket-checkbox {
+      margin-bottom: 10px;
+      justify-content: center;
+    }
+  }
+  
+  /* Status Specific Styling */
+  .ticket-info p[data-status="Cancelled"] {
+    color: var(--danger-color);
+  }
+  
+  .ticket-info p[data-status="Waiting"] {
+    color: orange;
+  }
