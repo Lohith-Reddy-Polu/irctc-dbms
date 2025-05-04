@@ -6,7 +6,6 @@ body {
 }
 
 nav {
-  background-color: #333;
   color: #fff;
   padding: 10px;
 }
@@ -40,7 +39,14 @@ h2 {
   color: #333;
 }
 
-form {
+/* form {
+  background-color: #fff;
+  padding: 20px;
+  margin: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+} */
+main form, .page-content form {
   background-color: #fff;
   padding: 20px;
   margin: 20px;
