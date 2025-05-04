@@ -41,14 +41,15 @@ const AdminDashboard = () => {
   //   </div>
   // );
   return (
-    <div>
-      <Navbar isAdmin={true} />
-      <div className="admin-dashboard-container">
-        <h2>Admin Dashboard</h2>
-        <p><strong>Welcome, {admin}</strong></p>
-        <p>Manage trains, view bookings, and more.</p>
-      </div>
-    </div>
+<div>
+  <Navbar isAdmin={true} />
+  <div className="admin-dashboard-container">
+    <h2>Admin Dashboard</h2>
+    <p><strong>Welcome, {admin}</strong></p>
+    <p>Manage trains, view bookings, and more.</p>
+    
+  </div>
+</div>
   );
   
 };

@@ -1,67 +1,193 @@
-/* AdminLogin.css */
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2980b9;
+  --background-color: #f4f6f7;
+  --text-color: #2c3e50;
+  --white: #ffffff;
+  --error-color: #e74c3c;
+}
 
 .admin-login-container {
-    max-width: 400px;
-    margin: 80px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.1);
-    font-family: 'Segoe UI', sans-serif;
+  max-width: 450px;
+  margin: 60px auto;
+  padding: 40px;
+  background-color: var(--white);
+  border-radius: 16px;
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.1),
+    0 6px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.admin-login-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg, 
+    transparent, 
+    rgba(52, 152, 219, 0.1), 
+    transparent
+  );
+  transform: rotate(-45deg);
+  z-index: 1;
+}
+
+.admin-login-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 15px 45px rgba(0, 0, 0, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.admin-login-container h2 {
+  text-align: center;
+  color: var(--text-color);
+  margin-bottom: 30px;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  position: relative;
+}
+
+.admin-login-container h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 60px;
+  height: 4px;
+  background-color: var(--primary-color);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.admin-login-container form {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-login-container label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+.admin-login-container input[type="email"],
+.admin-login-container input[type="password"] {
+  padding: 14px;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.admin-login-container input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.admin-login-container input:focus + label,
+.admin-login-container input:not(:placeholder-shown) + label {
+  color: var(--primary-color);
+}
+
+.admin-login-container button[type="submit"] {
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-login-container button[type="submit"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  transition: all 0.3s ease;
+}
+
+.admin-login-container button[type="submit"]:hover::before {
+  left: 100%;
+}
+
+.admin-login-container button[type="submit"]:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-login-container button[type="submit"]:active {
+  transform: scale(0.98);
+}
+
+.error-message {
+  color: var(--error-color);
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 20px;
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  animation: shake 0.4s linear;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .admin-login-container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 25px;
   }
-  
+
   .admin-login-container h2 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 24px;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
-  
-  .admin-login-container form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .admin-login-container label {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #34495e;
-  }
-  
-  .admin-login-container input[type="email"],
-  .admin-login-container input[type="password"] {
+
+  .admin-login-container input,
+  .admin-login-container button {
     padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
   }
-  
-  .admin-login-container input:focus {
-    outline: none;
-    border-color: #3498db;
-  }
-  
-  .admin-login-container button[type="submit"] {
-    background-color: #3498db;
-    color: white;
-    font-size: 1rem;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .admin-login-container button:hover {
-    background-color: #2980b9;
-  }
-  
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .admin-login-container,
+  .admin-login-container button,
   .error-message {
-    color: red;
-    text-align: center;
-    font-weight: 600;
-    margin-bottom: 16px;
+    transition: none;
+    animation: none;
   }
-  
+}
