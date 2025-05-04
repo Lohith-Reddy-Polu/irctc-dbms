@@ -332,7 +332,7 @@ app.post('/add-delay', async (req, res) => {
 app.get('/stations', isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM Stations ORDER BY station_name");
-    res.json(result.rows);
+    res.status(200).json(result.rows);
   } catch (err) {
     handleDbError(res, err);
   }
@@ -397,51 +397,139 @@ app.post('/search-trains', isAuthenticated, async (req, res) => {
 // });
 
 app.post('/add-train', isAuthenticated, async (req, res) => {
-  const {
-    train_no, train_name, src_stn, dest_stn,
-    arrival_time, departure_time, operating_days,
-    seatCounts
+  const { 
+    train_no, 
+    train_name, 
+    src_stn, 
+    dest_stn, 
+    arrival_time, 
+    departure_time, 
+    operating_days,
+    seatCounts,
+    intermediateStations ,
+    distance
   } = req.body;
+
+  const client = await pool.connect();
+  await client.query('BEGIN');
+  const daysArray = operating_days
+        .replace(/[{}]/g, '')
+        .split(',')
+        .map(day => day.trim());
+
+  for (const day of daysArray) {
+    if (!['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].includes(day)) {
+      throw new Error(`Invalid day: ${day}`);
+    }
+  }
 
   if (!req.session.adminId) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
+  const srcStationQuery = await client.query(
+    'SELECT station_id FROM Stations WHERE station_code = $1',
+    [src_stn]
+  );
+  const destStationQuery = await client.query(
+    'SELECT station_id FROM Stations WHERE station_code = $1',
+    [dest_stn]
+  );
+  if (srcStationQuery.rows.length === 0) {
+    throw new Error(`Source station with code ${src_stn} does not exist`);
+  }
+  
+  if (destStationQuery.rows.length === 0) {
+    throw new Error(`Destination station with code ${dest_stn} does not exist`);
+  }
 
-  const client = await pool.connect();
+ 
   try {
-    await client.query('BEGIN');
-    const result = await client.query(
-      `INSERT INTO Train (train_no, train_name, src_stn, dest_stn,
-        arrival_time, departure_time, operating_days)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+    
+    const trainResult = await client.query(
+      `INSERT INTO Train 
+       (train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7::day_enum[]) 
        RETURNING train_id`,
-      [train_no, train_name, src_stn, dest_stn,
-        arrival_time, departure_time, operating_days]
+      [train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, `{${daysArray.join(',')}}`]
     );
 
-    const trainId = result.rows[0].train_id;
+    const trainId = trainResult.rows[0].train_id;
 
-    const bhogi = 'B1'; // using 'B1' by default
-    let insertValues = [];
-    let index = 1;
-
-    for (const cls of ['SLP', '3AC', '2AC', '1AC']) {
-      const count = seatCounts[cls];
-      for (let i = 1; i <= count; i++) {
-        insertValues.push(`(${trainId}, '${cls}', '${bhogi}', ${i}, 'Available')`);
+    const seatClasses = Object.keys(seatCounts);
+    for (const seatClass of seatClasses) {
+        const count = seatCounts[seatClass];
+        if (count > 0) {
+          // Determine how many seats per bogie based on class
+          let seatsPerBogie = 72;  // Default for SLP
+          if (seatClass === '3AC') seatsPerBogie = 64;
+          else if (seatClass === '2AC') seatsPerBogie = 46;
+          else if (seatClass === '1AC') seatsPerBogie = 24;
+          
+          const bogieCount = Math.ceil(count / seatsPerBogie);
+          
+          for (let bogieNum = 1; bogieNum <= bogieCount; bogieNum++) {
+            const bogieName = `B${bogieNum}`;
+            const seatsInThisBogie = bogieNum < bogieCount ? seatsPerBogie : count - ((bogieNum - 1) * seatsPerBogie);
+            
+            for (let seatNum = 1; seatNum <= seatsInThisBogie; seatNum++) {
+              await client.query(
+                `INSERT INTO Seats 
+                 (train_id, class, bhogi, seat_number) 
+                 VALUES ($1, $2, $3, $4)`,
+                [trainId, seatClass, bogieName, seatNum]
+              );
+            }
+          }
+        }
       }
-    }
+      const srcStationId = srcStationQuery.rows[0].station_id;
+      await client.query(
+        `INSERT INTO Route 
+         (train_id, station_id, stop_number, arrival_time, departure_time, distance_from_start_km) 
+         VALUES ($1, $2, $3, NULL, $4, $5)`,
+        [trainId, srcStationId, 1, departure_time, 0]  // Source has no arrival time
+      );
 
-    if (insertValues.length > 0) {
-      const seatsQuery = `
-        INSERT INTO Seats (train_id, class, bhogi, seat_number, status)
-        VALUES ${insertValues.join(",")}
-      `;
-      await client.query(seatsQuery);
-    }
-
-    await client.query('COMMIT');
-    res.status(201).json({ message: 'Train and seats added successfully!', train: result.rows[0] });
+      if (intermediateStations && intermediateStations.length > 0) {
+        for (const station of intermediateStations) {
+          // Check if station exists
+          const stationQuery = await client.query(
+            'SELECT station_id FROM Stations WHERE station_code = $1',
+            [station.station_code]
+          );
+          
+          if (stationQuery.rows.length === 0) {
+            throw new Error(`Station with code ${station.station_code} does not exist`);
+          }
+          
+          const stationId = stationQuery.rows[0].station_id;
+          
+          await client.query(
+            `INSERT INTO Route 
+             (train_id, station_id, stop_number, arrival_time, departure_time, distance_from_start_km) 
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              trainId, 
+              stationId, 
+              station.stop_number, 
+              station.arrival_time, 
+              station.departure_time, 
+              station.distance_from_start_km
+            ]
+          );
+        }
+      }
+      const destStationId = destStationQuery.rows[0].station_id;
+      const finalStopNumber = intermediateStations.length > 0 
+        ? intermediateStations.length + 2  : 2;
+      await client.query(
+          `INSERT INTO Route 
+           (train_id, station_id, stop_number, arrival_time, departure_time, distance_from_start_km) 
+           VALUES ($1, $2, $3, $4, NULL, $5)`,
+          [trainId, destStationId, finalStopNumber, arrival_time, distance]  // Destination has no departure time
+        );
+      await client.query('COMMIT');
+      res.status(201).json({ message: 'Train and seats,routes added successfully!', train: trainResult.rows[0] , train_id: trainId  });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error("Add train error:", error);
