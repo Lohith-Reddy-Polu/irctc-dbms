@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiUrl } from "../config/config";
-import { useNavigate } from "react-router-dom";
+import { useLocation,  useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import "../css/orderfood.css";
 
 const OrderFood = () => {
@@ -10,6 +11,7 @@ const OrderFood = () => {
   const [cart, setCart] = useState([]);
   const [error, setError] = useState('');
   const [confirmation, setConfirmation] = useState('');
+    const navigate = useNavigate();
 
   const validatePNR = async (pnrNumber) => {
     try {
@@ -93,6 +95,7 @@ const OrderFood = () => {
       const result = await res.json();
       setConfirmation(result.message || 'Order placed successfully!');
       setCart([]);
+      setTimeout(() => navigate("/user-dashboard"), 3000);
     } catch (err) {
       setError('Failed to place the order');
     }

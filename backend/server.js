@@ -1019,7 +1019,7 @@ app.post('/validate-pnr', async (req, res) => {
   try {
     const query = `
       SELECT 
-        b.booking_id, b.train_id, b.travel_date, b.booking_status, 
+        b.booking_id, b.train_id, b.travel_date, t.booking_status, 
         b.src_stn, b.dest_stn, b.total_fare, 
         t.ticket_id, t.passenger_name, t.passenger_gender, t.passenger_age, t.seat_id
       FROM Booking b
@@ -1032,7 +1032,7 @@ app.post('/validate-pnr', async (req, res) => {
       return res.status(404).json({ error: 'PNR not found or no tickets available' });
     }
 
-    res.json({ booking: result.rows[0], tickets: result.rows });
+    res.status(200).json({ booking: result.rows[0], tickets: result.rows });
   } catch (err) {
     console.error('Error validating PNR:', err);
     res.status(500).json({ error: 'Server error' });
@@ -1283,20 +1283,28 @@ async function processWaitlist(client, train_id, train_class, travel_date) {
       // Check for available seat
       const availableSeatsQuery = `
         SELECT s.seat_id, s.bhogi, s.seat_number
-        FROM Seats s
-        WHERE s.train_id = $1 AND s.class = $2 AND s.bhogi != 'WL'
+      FROM Seats s
+      WHERE s.train_id = $1
+        AND s.class = $2
+        AND s.bhogi != 'WL'
         AND NOT EXISTS (
-          SELECT 1 FROM Ticket t2
+          SELECT 1
+          FROM Ticket t2
           JOIN Booking b2 ON t2.booking_id = b2.booking_id
+          JOIN Route r_src ON r_src.train_id = b2.train_id AND r_src.station_id = b2.src_stn
+          JOIN Route r_dest ON r_dest.train_id = b2.train_id AND r_dest.station_id = b2.dest_stn
           WHERE t2.seat_id = s.seat_id
-          AND b2.travel_date = $3
-          AND t2.booking_status = 'Confirmed'
-          AND EXISTS (
-            SELECT 1 FROM UNNEST($4::int[]) station_id
-            WHERE station_id BETWEEN b2.src_stn AND b2.dest_stn
-          )
+            AND b2.travel_date = $3
+            AND t2.booking_status = 'Confirmed'
+            AND EXISTS (
+              SELECT 1
+              FROM UNNEST($4::int[]) AS sid
+              JOIN Route r_mid ON r_mid.train_id = s.train_id AND r_mid.station_id = sid
+              WHERE r_mid.stop_number >= r_src.stop_number
+                AND r_mid.stop_number < r_dest.stop_number
+            )
         )
-        LIMIT 1
+      LIMIT 1;
       `;
 
       const stationIds = await getStationIdsBetween(train_id, ticket.src_stn, ticket.dest_stn);
@@ -1427,7 +1435,7 @@ app.post('/cancel-tickets', async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.json({
+    res.status(200).json({
       message: 'Tickets cancelled successfully',
       cancelledTickets: ticketIds.length,
       refundAmount
