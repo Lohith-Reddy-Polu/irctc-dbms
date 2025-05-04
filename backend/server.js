@@ -525,6 +525,12 @@ app.post('/book-ticket', async (req, res) => {
         if(class2 == '1AC') fare += 5*(dis_2 - dis_1);
         if(class2 == 'SLP') fare += 2*(dis_2 - dis_1);
       }
+      for (const pas of waitlisted_passengers){
+        if(train_class == '3AC') {fare += 3*(dis_2 - dis_1);}
+        if(train_class == '2AC') fare += 4*(dis_2 - dis_1);
+        if(train_class == '1AC') fare += 5*(dis_2 - dis_1);
+        if(train_class == 'SLP') fare += 2*(dis_2 - dis_1);
+      }
     }
 
     
@@ -1342,7 +1348,6 @@ async function processWaitlist(client, train_id, train_class, travel_date) {
     }
 
     // Update remaining waitlist numbers to be sequential
-    if (confirmedTicketIds.length > 0) {
       const updateWaitlistQuery = `
         WITH ranked AS (
           SELECT 
@@ -1362,7 +1367,6 @@ async function processWaitlist(client, train_id, train_class, travel_date) {
       `;
 
       await client.query(updateWaitlistQuery, [train_id, train_class, travel_date]);
-    }
 
   } catch (error) {
     console.error('Error processing waitlist:', error);
@@ -1386,7 +1390,7 @@ app.post('/cancel-tickets', async (req, res) => {
     const ticketDetailsQuery = `
       SELECT t.ticket_id, t.booking_id, t.passenger_name, b.train_id, 
              b.train_class, b.travel_date, b.user_id, b.pnr_number,
-             tr.train_name
+             tr.train_name,b.src_stn,b.dest_stn,t.seat_id, t.passenger_gender, t.passenger_age
       FROM Ticket t
       JOIN Booking b ON t.booking_id = b.booking_id
       JOIN Train tr ON b.train_id = tr.train_id
@@ -1413,9 +1417,39 @@ app.post('/cancel-tickets', async (req, res) => {
       [ticketDetails.rows[0].user_id]
     );
 
+    const src_stn_id = ticketDetails.rows[0].src_stn;
+    const dest_stn_id = ticketDetails.rows[0].dest_stn;
+    const train_id = ticketDetails.rows[0].train_id;
+    const travel_date = ticketDetails.rows[0].travel_date;
+    const train_class = ticketDetails.rows[0].train_class;
     // Calculate refund amount (simplified version)
-    const refundAmount = 100; // Replace with actual refund calculation
+    let refundAmount = 0; // Replace with actual refund calculation
+    const dis1 = await pool.query(`select distance_from_start_km from Route where station_id = $1 and train_id = $2`,[src_stn_id,train_id]);
+    const dis2 = await pool.query(`select distance_from_start_km from Route where station_id = $1 and train_id = $2`,[dest_stn_id,train_id]);
+    let dis_1 = dis1.rows[0].distance_from_start_km;
+    let dis_2 = dis2.rows[0].distance_from_start_km;
+    // Validate input
+    if (!train_id || !travel_date || !train_class || !src_stn_id || !dest_stn_id || !(ticketDetails )) {
+      return res.status(400).json({ error: 'Missing required cancelling fields' });
+    }
 
+    // Validate each seat entry
+    if(ticketDetails.rows ){
+      for (const seat of ticketDetails.rows ) {
+        if (!seat.seat_id || !seat.passenger_name || !seat.passenger_gender || !seat.passenger_age) {
+          return res.status(400).json({ error: 'Missing passenger or seat details' });
+        }
+        const class1 = await pool.query(`select class from seats where train_id=$1 and seat_id=$2`,[train_id,seat.seat_id]);
+        let class2 = class1.rows[0].class;
+        if(class2 == '3AC') {refundAmount += 3*(dis_2 - dis_1);}
+        if(class2 == '2AC') refundAmount += 4*(dis_2 - dis_1);
+        if(class2 == '1AC') refundAmount += 5*(dis_2 - dis_1);
+        if(class2 == 'SLP') refundAmount += 2*(dis_2 - dis_1);
+      }
+    }
+
+
+   
     // Send cancellation email
     await sendCancellationEmail(userEmail.rows[0].email, {
       pnr: ticketDetails.rows[0].pnr_number,

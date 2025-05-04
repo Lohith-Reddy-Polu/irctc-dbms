@@ -282,7 +282,7 @@ const Booking = () => {
       if (response.status === 200) {
         setSuccess(`Booking successful! PNR: ${data.pnr_number}`);
         setError("");
-        setTimeout(() => navigate("/user-dashboard"), 3000);
+        setTimeout(() => navigate("/user-dashboard"), 1000);
       } else {
         setError(data.error || "Booking failed");
       }

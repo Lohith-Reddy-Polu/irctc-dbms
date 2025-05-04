@@ -55,9 +55,11 @@ const PNREnquiry = () => {
                 <td>{ticket.passenger_age}</td>
                 <td>{ticket.booking_status}</td>
                 <td>
-                  {ticket.booking_status.toLowerCase() === "confirmed"
+                {ticket.booking_status.toLowerCase() === "confirmed"
                     ? `${ticket.bhogi}-${ticket.seat_number}`
-                    : `WL${ticket.waitlist_number}`}
+                    : ticket.booking_status.toLowerCase() === "cancelled"
+                      ? "Cancelled"
+                      : `WL${ticket.waitlist_number}`}
                 </td>
               </tr>
             ))}
@@ -71,7 +73,7 @@ const PNREnquiry = () => {
     <div className="pnr-enquiry-container">
       <h1>PNR Enquiry</h1>
       <input
-        type="text"
+        type="number"
         placeholder="Enter PNR Number"
         value={pnrNumber}
         onChange={(e) => setPnrNumber(e.target.value)}
