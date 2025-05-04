@@ -21,6 +21,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import AddDelay from './pages/AddDelay';
 import PnrEnquiry from './pages/PnrEnquiry';
 import CancelTicket from './pages/CancelTicket' ;
+import FAQ from './pages/FAQ' ;
 import './styles.css';
 
 const App = () => {
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/add-delay" element={< AddDelay/>} /> 
         <Route path="/pnr-enquiry" element={< PnrEnquiry/>} /> 
         <Route path="/cancel-ticket" element={< CancelTicket/>} /> 
+        <Route path="/FAQ" element={< FAQ/>} /> 
       </Routes>
     </div>
   );
