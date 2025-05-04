@@ -1,10 +1,20 @@
-/* Navbar container — transparent */
-nav {
-  padding: 1rem 2rem;
-  box-shadow: none; /* Optional: remove shadow */
+:root {
+  --primary-color: #2e7d32;
+  --secondary-color: #66bb6a;
+  --background-color: #f4f6f7;
+  --text-color: #333;
+  --white: #ffffff;
 }
 
-/* Flex container for buttons */
+nav {
+  background-color: var(--white);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 nav ul {
   list-style-type: none;
   margin: 0;
@@ -12,48 +22,119 @@ nav ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Each nav item */
 nav li {
-  background-color: transparent;
-  display: inline-block;
+  margin: 0.3rem;
 }
 
-/* Clean, modern button styling */
 nav button {
-  background-color: #2e7d32;
-  color: #ffffff;
+  background-color: var(--primary-color);
+  color: var(--white);
   border: none;
-  padding: 0.6rem 1.4rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: all 0.2s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Hover + focus effects */
-nav button:hover,
-nav button:focus {
-  background-color: #66bb6a;
-  color: #1e1e1e;
+nav button:hover {
+  background-color: var(--secondary-color);
   transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Active/pressed state */
 nav button:active {
-  transform: scale(0.98);
+  transform: scale(0.95);
   box-shadow: none;
 }
 
+/* Specific Button Styles */
+nav button[data-type="admin"] {
+  background-color: #1565c0;
+}
 
-/* Responsive layout for smaller screens */
+nav button[data-type="admin"]:hover {
+  background-color: #1976d2;
+}
+
+nav button[data-type="user"] {
+  background-color: #2e7d32;
+}
+
+nav button[data-type="user"]:hover {
+  background-color: #388e3c;
+}
+
+nav button[data-type="logout"] {
+  background-color: #d32f2f;
+}
+
+nav button[data-type="logout"]:hover {
+  background-color: #f44336;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  nav {
+    padding: 0.5rem;
+  }
+
   nav ul {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    gap: 0.3rem;
   }
+
+  nav li {
+    width: 100%;
+    margin: 0.2rem 0;
+  }
+
+  nav button {
+    width: 100%;
+    padding: 0.6rem;
+    max-width: none;
+  }
+}
+
+/* Compact Scrollable Navbar for Wide Screens */
+@media (min-width: 769px) {
+  nav ul {
+    max-width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.2) transparent;
+  }
+
+  nav ul::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  nav ul::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 4px;
+  }
+}
+
+/* Accessibility */
+nav button:focus {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 2px;
 }

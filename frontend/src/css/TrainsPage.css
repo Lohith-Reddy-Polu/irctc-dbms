@@ -1,76 +1,121 @@
-/* TrainsPage.css */
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #198754;
+  --background-color: #f4f6f7;
+  --text-color: #333;
+  --white: #ffffff;
+}
 
-.trains-container {
-  max-width: 960px;
+.trains-page {
+  max-width: 1000px;
   margin: 40px auto;
-  padding: 24px;
-  background-color: #ffffff;
+  padding: 30px;
+  background-color: var(--white);
   border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.1),
+    0 6px 15px rgba(0, 0, 0, 0.05);
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
 }
 
-.trains-container h2 {
+.trains-page h2 {
   text-align: center;
-  color: #222;
-  margin-bottom: 24px;
-  font-size: 28px;
+  color: var(--primary-color);
+  margin-bottom: 30px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  position: relative;
 }
 
-.train-search {
+.trains-page h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 60px;
+  height: 4px;
+  background-color: var(--primary-color);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.search-bar {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
-.train-search input,
-.train-search button {
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
-}
-
-.train-search input {
-  border: 1px solid #ccc;
+.search-bar input {
+  flex: 1;
   min-width: 200px;
-}
-
-.train-search input:focus {
-  border-color: #0d6efd;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
   outline: none;
 }
 
-.train-search button {
-  background-color: #0d6efd;
-  color: #fff;
-  border: none;
-  cursor: pointer;
+.search-bar input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
 }
 
-.train-search button:hover {
-  background-color: #0b5ed7;
+/* Enhanced Date Input Styling */
+.search-bar input[type="date"] {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.search-bar button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-bar button:hover {
+  background-color: darken(#0d6efd, 10%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .train-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-}
-
-.train-table th,
-.train-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .train-table th {
-  background-color: #0d6efd;
-  color: #fff;
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 15px;
+  text-align: left;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.train-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease;
 }
 
 .train-table tr:nth-child(even) {
@@ -78,27 +123,46 @@
 }
 
 .train-table tr:hover {
-  background-color: #eef5ff;
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
-.book-button {
-  padding: 8px 12px;
-  font-size: 14px;
-  background-color: #198754;
-  color: #fff;
+.book-btn {
+  padding: 8px 15px;
+  background-color: var(--secondary-color);
+  color: var(--white);
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-.book-button:hover {
-  background-color: #157347;
+.book-btn:hover {
+  background-color: darken(#198754, 10%);
+  transform: translateY(-2px);
 }
 
 .error-message {
   color: #dc3545;
   text-align: center;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
   font-weight: 500;
-  margin-top: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .trains-page {
+    padding: 20px;
+  }
+
+  .search-bar {
+    flex-direction: column;
+  }
+
+  .search-bar input,
+  .search-bar button {
+    width: 100%;
+  }
 }

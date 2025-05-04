@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiUrl } from "../config/config";
 import "../css/pnrenquiry.css";
+import Navbar from '../components/Navbar';
 
 const PNREnquiry = () => {
   const [pnrNumber, setPnrNumber] = useState("");
@@ -71,6 +72,7 @@ const PNREnquiry = () => {
 
   return (
     <div className="pnr-enquiry-container">
+      <Navbar isAdmin={false} />
       <h1>PNR Enquiry</h1>
       <input
         type="number"
