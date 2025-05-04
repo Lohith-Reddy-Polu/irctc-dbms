@@ -46,6 +46,12 @@ const Navbar = ({ isAdmin }) => {
           <li>
             <button onClick={() => navigate("/cancel-ticket")}>Cancel Ticket</button>
           </li>
+          <li>
+          <button onClick={() => navigate("/order-food")}>Order Food</button>
+        </li>
+        <li>
+          <button onClick={() => navigate("/pnr-enquiry")}>PNR ENQUIRY</button>
+        </li>
           </>
         )}
         {isAdmin && (
@@ -75,12 +81,6 @@ const Navbar = ({ isAdmin }) => {
         </li>
         <li>
           <button onClick={() => navigate("/profile")}>Profile</button>
-        </li>
-        <li>
-          <button onClick={() => navigate("/order-food")}>Order Food</button>
-        </li>
-        <li>
-          <button onClick={() => navigate("/pnr-enquiry")}>PNR ENQUIRY</button>
         </li>
       </ul>
     </nav>

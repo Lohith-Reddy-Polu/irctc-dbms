@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
+  const [type, setType] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   useEffect(() => {
@@ -19,7 +20,9 @@ const Profile = () => {
         if (res.status !== 200) {
            setError(res.error);
         }
-        setProfile(data);
+        setProfile(data.re);
+        setType(data.type)
+        console.log(data);
       } catch (err) {
         console.error(err);
         setError("Unable to load profile.");
@@ -31,7 +34,7 @@ const Profile = () => {
 
   return (
     <div className="profile-container">
-      <Navbar isAdmin={false} />
+      <Navbar isAdmin={type} />
       <h1>My Profile</h1>
       {error && <p className="error-message">{error}</p>}
 

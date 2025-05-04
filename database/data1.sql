@@ -10,8 +10,8 @@ INSERT INTO Stations (station_code, station_name) VALUES
 ('NGP', 'Nagpur Junction'),
 ('CSMT', 'Mumbai CSMT');
 
-INSERT INTO Admin (admin_id,name,password,email) VALUES
-(1,'lohith','lohith','22B0947@iitb.ac.in');
+INSERT INTO Admin (admin_id,name,password,email,phone_no) VALUES
+(1,'lohith','lohith','22B0947@iitb.ac.in','9877777777');
 
 INSERT INTO Train (train_no, train_name, src_stn, dest_stn, arrival_time, departure_time, operating_days) VALUES
 ('12301', 'Rajdhani Express', 'NDLS', 'HWH', '17:00', '17:30', ARRAY['Monday', 'Wednesday', 'Friday']::day_enum[]),

@@ -161,11 +161,22 @@ app.post('/user-login',isLoggedIn, async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", isAuthenticated,async (req, res) => {
   try {
+    if(req.session.adminId){
+      const adminId = req.session.adminId;
+      const result = await pool.query(
+        "SELECT name, email, phone_no FROM Admin WHERE admin_id = $1",
+        [adminId]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Admin not found" });
+      }
+      res.status(200).json({re:result.rows[0],type:true});
+    }
+    else{
     const userId = req.session.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
     const result = await pool.query(
       "SELECT name, email, phone_no FROM Users WHERE user_id = $1",
       [userId]
@@ -174,7 +185,7 @@ app.get("/profile", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json(result.rows[0]);
+    res.status(200).json({re: result.rows[0],type:false});}
   } catch (err) {
     console.error("Error fetching profile:", err);
     res.status(500).json({ error: "Server error" });

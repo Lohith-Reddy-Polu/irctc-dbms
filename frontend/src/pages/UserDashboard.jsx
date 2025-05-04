@@ -37,11 +37,15 @@ const UserDashboard = () => {
   , [navigate]);
 
   return (
-    <div className="dashboard-container">
-      <Navbar isAdmin={false} />
+    <div>
+       <Navbar isAdmin={false} />
+       <div className="dashboard-wrapper">
+       <div className="dashboard-container">
       <h2>User Dashboard</h2>
       <p>Welcome, {user}</p>
       <p>Look trains, view bookings, and more.</p>
+    </div>
+    </div>
     </div>
   );
 };

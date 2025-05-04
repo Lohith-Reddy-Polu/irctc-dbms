@@ -9,6 +9,7 @@ const LiveTrainTracker = () => {
   const [date, setDate] = useState("");
   const [statusData, setStatusData] = useState([]);
   const [error, setError] = useState("");
+  const [type, setType] = useState(false);
   const navigate = useNavigate();
   const parseTime = (timeStr) => new Date(`1970-01-01T${timeStr}Z`);
   const addMinutes = (timeStr, minutes) => {
@@ -25,10 +26,27 @@ const LiveTrainTracker = () => {
             headers: { "Content-Type": "application/json" },
           });
           if (response.status !== 200) {
-            navigate("/");
+            console.log("hi");
+            try{
+              const response1 = await fetch(`${apiUrl}/isAdminLoggedIn`, {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+              });
+              if (response1.status !== 200) {
+                console.log("hi1");
+              navigate("/");}
+              else{
+                setType(true);
+              }
+            }
+            catch(err){
+              console.error("Auth admin check failed", err);
+              navigate("/");
+            }
           }
         } catch (err) {
-          console.error("Auth check failed", err);
+          console.error("Auth user check failed", err);
           navigate("/");
         }
       };
@@ -104,7 +122,7 @@ const LiveTrainTracker = () => {
   return (
     
     <div className="live-train-tracker-container">
-      <Navbar isAdmin={false} />
+      <Navbar isAdmin={type} />
       <h2>Live Train Tracker</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="trainNumber">Train Number:</label>
