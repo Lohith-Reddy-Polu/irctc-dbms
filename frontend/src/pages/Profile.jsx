@@ -33,8 +33,9 @@ const Profile = () => {
   }, []);
 
   return (
-    <div className="profile-container">
+    <div>
       <Navbar isAdmin={type} />
+    <div className="profile-container">
       <h1>My Profile</h1>
       {error && <p className="error-message">{error}</p>}
 
@@ -47,6 +48,7 @@ const Profile = () => {
       ) : (
         <p>Loading profile...</p>
       )}
+    </div>
     </div>
   );
 };

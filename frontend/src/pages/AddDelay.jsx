@@ -33,6 +33,8 @@ const AddDelay = () => {
   };
 
   return (
+    <div>
+      <Navbar isAdmin={true} />
     <div className="delay-form">
       <h2>Update Train Delay</h2>
       <input
@@ -69,6 +71,7 @@ const AddDelay = () => {
       <button onClick={() => handleSubmit('departure')}>Update Departure Delay</button>
 
       {message && <p className="message">{message}</p>}
+    </div>
     </div>
   );
 }

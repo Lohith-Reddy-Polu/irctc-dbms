@@ -1,33 +1,51 @@
 .profile-container {
-    padding: 2rem;
-    font-family: Arial, sans-serif;
-  }
-  
-  h1 {
-    margin-bottom: 1rem;
-    font-size: 1.8rem;
-    font-weight: bold;
-  }
-  
-  .error-message {
-    color: red;
-  }
-  
-  .profile-card {
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 1.5rem;
-    border-radius: 10px;
-    max-width: 500px;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
-  }
-  
-  .profile-card p {
-    margin-bottom: 0.8rem;
-    font-size: 1rem;
-  }
-  
-  .label {
-    font-weight: bold;
-  }
-  
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 2rem;
+  background-color: #fdfdfd;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.profile-container h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #333;
+}
+
+.error-message {
+  color: #d9534f;
+  background-color: #f8d7da;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.profile-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left; /* Add this line */
+}
+
+
+.profile-card p {
+  font-size: 1rem;
+  margin: 0.75rem 0;
+  color: #444;
+  text-align: left; /* Add this line */
+}
+
+.profile-card .label {
+  font-weight: bold;
+  color: #222;
+  display: inline-block;
+  width: 140px;
+}
+
+
+

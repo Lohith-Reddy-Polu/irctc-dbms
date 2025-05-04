@@ -314,8 +314,10 @@ const Booking = () => {
   if (!train) return <div>No train selected. Please go back and try again.</div>;
 
   return (
+    <div>
+       <Navbar isAdmin={false} />
     <div className="booking-container">
-      <Navbar isAdmin={false} />
+      
       <h2>Book Train: {train.train_name}</h2>
       <p>Date: {travelDate}</p>
 
@@ -482,6 +484,7 @@ const Booking = () => {
         {error && <p className="message error">{error}</p>}
         {success && <p className="message success">{success}</p>}
       </div>
+    </div>
     </div>
   );
 };

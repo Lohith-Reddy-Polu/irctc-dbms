@@ -120,9 +120,8 @@ const LiveTrainTracker = () => {
   };
 
   return (
-    
+    <div><Navbar isAdmin={type} />
     <div className="live-train-tracker-container">
-      <Navbar isAdmin={type} />
       <h2>Live Train Tracker</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="trainNumber">Train Number:</label>
@@ -172,6 +171,7 @@ const LiveTrainTracker = () => {
           </table>
         </div>
       )}
+    </div>
     </div>
   );
 };

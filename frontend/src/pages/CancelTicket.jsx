@@ -111,8 +111,9 @@ const CancelTicket = () => {
     if (error) return <div className="error">{error}</div>;
 
     return (
-        <div className="cancel-ticket-container">
+        <div>
             <Navbar isAdmin={false} />
+        <div className="cancel-ticket-container">
             <h2>Cancel Tickets</h2>
 
             <div className="booking-select-container">
@@ -172,6 +173,7 @@ const CancelTicket = () => {
                     )}
                 </div>
             )}
+        </div>
         </div>
     );
 };

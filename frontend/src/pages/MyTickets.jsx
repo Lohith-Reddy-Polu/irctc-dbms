@@ -36,8 +36,9 @@ const MyTickets = () => {
   };
 
   return (
+    <div>
+       <Navbar isAdmin={false} />
     <div className="my-tickets-container">
-      <Navbar isAdmin={false} />
       <h1>My Tickets</h1>
       {error && <p className="error-message">{error}</p>}
 
@@ -80,6 +81,7 @@ const MyTickets = () => {
           </div>
         ))
       )}
+    </div>
     </div>
   );
 };

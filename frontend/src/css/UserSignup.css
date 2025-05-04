@@ -1,24 +1,21 @@
-/* Background and base font */
+
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(to right, #e3f2fd, #bbdefb); /* light blue gradient */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Wrapper to center the form */
+
 .signup-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
 
-  /* ✅ Gradient applied here instead of body */
-  background: linear-gradient(to right, #e3f2fd, #bbdefb); /* light blue gradient */
+
 }
 
 
-/* Inner content box */
 .signup-content {
   background-color: white;
   padding: 2.5rem;
@@ -28,7 +25,6 @@ body {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
-/* Title */
 h2 {
   text-align: center;
   color: #1565c0;

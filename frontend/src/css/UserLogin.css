@@ -4,7 +4,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #e1f5fe, #b3e5fc);
+  /* background: linear-gradient(to right, #e1f5fe, #b3e5fc); */
 }
 
 /* Box that holds the login content */

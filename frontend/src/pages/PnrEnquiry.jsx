@@ -71,8 +71,10 @@ const PNREnquiry = () => {
   };
 
   return (
+    <div>
+        <Navbar isAdmin={false} />
     <div className="pnr-enquiry-container">
-      <Navbar isAdmin={false} />
+    
       <h1>PNR Enquiry</h1>
       <input
         type="number"
@@ -83,6 +85,7 @@ const PNREnquiry = () => {
       <button onClick={handleEnquiry}>Check Status</button>
       {error && <p className="error">{error}</p>}
       {renderTable()}
+    </div>
     </div>
   );
 };

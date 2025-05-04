@@ -1,20 +1,10 @@
-:root {
-  --primary-color: #2e7d32;
-  --secondary-color: #66bb6a;
-  --background-color: #f4f6f7;
-  --text-color: #333;
-  --white: #ffffff;
-}
-
+/* Navbar container — transparent */
 nav {
-  background-color: var(--white);
-  padding: 0.5rem 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 1rem 2rem;
+  box-shadow: none; /* Optional: remove shadow */
 }
 
+/* Flex container for buttons */
 nav ul {
   list-style-type: none;
   margin: 0;
@@ -22,49 +12,52 @@ nav ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
+/* Each nav item */
 nav li {
-  margin: 0.3rem;
+  background-color: transparent;
+  display: inline-block;
 }
 
+/* Clean, modern button styling */
 nav button {
-  background-color: var(--primary-color);
-  color: var(--white);
+  background-color: #2e7d32;
+  color: #ffffff;
   border: none;
-  padding: 0.5rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 6px;
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  transition: all 0.2s ease;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
-nav button:hover {
-  background-color: var(--secondary-color);
+/* Hover + focus effects */
+nav button:hover,
+nav button:focus {
+  background-color: #66bb6a;
+  color: #1e1e1e;
   transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Active/pressed state */
 nav button:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
   box-shadow: none;
 }
 
-/* Specific Button Styles */
+
+/* Responsive layout for smaller screens */
+@media (max-width: 768px) {
+  nav ul {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 nav button[data-type="admin"] {
   background-color: #1565c0;
 }

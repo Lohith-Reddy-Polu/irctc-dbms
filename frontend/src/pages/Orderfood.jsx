@@ -102,6 +102,9 @@ const OrderFood = () => {
   };
 
   return (
+    <div>
+       <Navbar isAdmin={false} />
+   
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">Order Food on Train</h1>
 
@@ -164,6 +167,7 @@ const OrderFood = () => {
       )}
 
       {confirmation && <p className="text-green-600 mt-4">{confirmation}</p>}
+    </div>
     </div>
   );
 };

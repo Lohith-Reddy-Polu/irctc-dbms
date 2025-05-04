@@ -66,24 +66,47 @@ const AdminLogin = () => {
   };
 
   return (
+    // <div>
+    //   <h2>Admin Login</h2>
+    //   {error ? <p style={{ color: "red" }}>{error}</p> : null}
+    //   <form onSubmit={handleSubmit}>
+    //     <label>
+    //       Email:
+    //       <input
+    //         type="email"
+    //         name="email"
+    //         value={formData.email}
+    //         onChange={handleChange}
+    //         required
+    //       />
+    //     </label>
+    //     <br />
+    //     <label>
+    //       Password:
+    //       <input
+    //         type="password"
+    //         name="password"
+    //         value={formData.password}
+    //         onChange={handleChange}
+    //         required
+    //       />
+    //     </label>
+    //     <br />
+    //     <button type="submit">Login</button>
+    //   </form>
+    // </div>
     <div className="admin-login-container">
   <h2>Admin Login</h2>
-  {error && (
-    <p className="error-message" role="alert">
-      {error}
-    </p>
-  )}
+  {error && <p className="error-message">{error}</p>}
   <form onSubmit={handleSubmit}>
     <label htmlFor="email">Email:</label>
     <input
       type="email"
       name="email"
       id="email"
-      placeholder=" "
       value={formData.email}
       onChange={handleChange}
       required
-      aria-required="true"
     />
 
     <label htmlFor="password">Password:</label>
@@ -91,11 +114,9 @@ const AdminLogin = () => {
       type="password"
       name="password"
       id="password"
-      placeholder=" "
       value={formData.password}
       onChange={handleChange}
       required
-      aria-required="true"
     />
 
     <button type="submit">Login</button>
